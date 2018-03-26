@@ -5,6 +5,7 @@ import astropy.coordinates as coord
 import urllib as ul
 from astropy.io import fits
 from regions import CircleSkyRegion
+from regions import PolygonSkyRegion
 from abc import abstractmethod, ABC
 
 from enum import Enum
@@ -17,8 +18,7 @@ class SpatialConstraint(ABC):
 
         self.intersectRegion = intersect
         self.request_payload = {
-            'intersect' : self.intersectRegion,
-            'fmt' : 'json'
+            'intersect' : self.intersectRegion
         }
 
     def __repr__(self):
@@ -34,6 +34,30 @@ class CircleSkyRegionSpatialConstraint(SpatialConstraint):
             'RA' : circleSkyRegion.center.ra.to_string(decimal=True),
             'SR' : str(circleSkyRegion.radius.value)
         })
+
+class PolygonSkyRegionSpatialConstraint(SpatialConstraint):
+    def __init__(self, polygonSkyRegion, intersect):
+        super(PolygonSkyRegionSpatialConstraint, self).__init__(intersect)
+
+        if not isinstance(polygonSkyRegion, PolygonSkyRegion):
+            raise TypeError
+
+        #test if the polygon has at least 3 vertices
+        if len(polygonSkyRegion.vertices.ra) < 3:
+            print("A polygon must have at least 3 vertices")
+            raise AttributeError
+
+        self.request_payload.update({
+            'stc' : self._to_STC(polygonSkyRegion)    
+        })
+    
+    def _to_STC(self, polygonSkyRegion):
+        polygonSTC = "Polygon"
+        for i in range(len(polygonSkyRegion.vertices.ra)):
+            polygonSTC += " " + polygonSkyRegion.vertices.ra[i].to_string(decimal=True) + " " + polygonSkyRegion.vertices.dec[i].to_string(decimal=True)
+        print(polygonSTC)
+        return polygonSTC
+
 
 class PropertiesConstraint(object):
     def __init__(self, propertiesExpr):
@@ -51,9 +75,9 @@ class PropertiesConstraint(object):
         return str
 
 class OperandExpr(Enum):
-    ANDOP = 1,
-    OROP = 2,
-    NANDOP = 3
+    Inter = 1,
+    Union = 2,
+    Subtr = 3
 
 class PropertiesExpr(ABC):
     @abstractmethod
@@ -78,7 +102,7 @@ class PropertiesDualExpr(PropertiesExpr):
         if not isinstance(exprRight, PropertiesExpr) or not isinstance(exprLeft, PropertiesExpr):
             raise TypeError
 
-        if operand not in (OperandExpr.ANDOP, OperandExpr.OROP, OperandExpr.NANDOP):
+        if operand not in (OperandExpr.Inter, OperandExpr.Union, OperandExpr.Subtr):
             raise TypeError
 
         self.exprLeft = exprLeft
@@ -92,9 +116,9 @@ class PropertiesDualExpr(PropertiesExpr):
         rightExprString = self.exprRight.eval()
        
         operandStr = " !& "
-        if self.operand is OperandExpr.ANDOP:
+        if self.operand is OperandExpr.Inter:
             operandStr = " && "
-        elif self.operand is OperandExpr.OROP:
+        elif self.operand is OperandExpr.Union:
             operandStr = " || "
 
         if isinstance(self.exprLeft, PropertiesDualExpr):

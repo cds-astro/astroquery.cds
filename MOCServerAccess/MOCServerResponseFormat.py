@@ -26,6 +26,7 @@ class MOCServerResponseFormat(object):
             raise TypeError
 
         self.request_payload = {
+            "fmt" : "json",
             "casesensitive" : str(caseSensitive).lower()
         }
 

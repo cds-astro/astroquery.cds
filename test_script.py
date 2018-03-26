@@ -1,7 +1,7 @@
 from astropy import coordinates
-from regions import CircleSkyRegion
+from regions import CircleSkyRegion, PolygonSkyRegion
 from MOCServerAccess.core import MOCServerQuery
-from MOCServerAccess.MOCServerConstraints import CircleSkyRegionSpatialConstraint
+from MOCServerAccess.MOCServerConstraints import CircleSkyRegionSpatialConstraint, PolygonSkyRegionSpatialConstraint
 from MOCServerAccess.MOCServerConstraints import SpatialConstraint, PropertiesConstraint
 from MOCServerAccess.MOCServerConstraints import MOCServerConstraints
 
@@ -15,7 +15,9 @@ if __name__ == '__main__':
     centerSkyCoord = coordinates.SkyCoord(10.8, 32.2, unit="deg")
     radius = coordinates.Angle(1.5, 'deg')
     circleSkyRegion = CircleSkyRegion(centerSkyCoord, radius)
-    spatialConstraint = CircleSkyRegionSpatialConstraint(circleSkyRegion, "overlaps")
+
+    polygonSkyRegion = PolygonSkyRegion(vertices=coordinates.SkyCoord([57.376, 56.391, 56.025, 56.616], [24.053, 24.622, 24.049, 24.290], frame="icrs", unit="deg"))
+    spatialConstraint = PolygonSkyRegionSpatialConstraint(polygonSkyRegion, "overlaps")
 
     # Properties constraint definition
     # An expression is defined as a tree-like data structure
@@ -23,15 +25,15 @@ if __name__ == '__main__':
     # to send to the http mocserver
     expr = PropertiesDualExpr()
     subExpr = PropertiesDualExpr()
-    subExpr.addChild(OperandExpr.OROP, PropertiesUniqExpr("moc_sky_fraction <= 0.01"), PropertiesUniqExpr("hips* = *"))
-    expr.addChild(OperandExpr.ANDOP, subExpr, PropertiesUniqExpr("ID = *"))
+    subExpr.addChild(OperandExpr.Union, PropertiesUniqExpr("moc_sky_fraction <= 0.01"), PropertiesUniqExpr("hips* = *"))
+    expr.addChild(OperandExpr.Inter, subExpr, PropertiesUniqExpr("ID = *"))
     # definition of the the constraint
     propertiesConstraint = PropertiesConstraint(expr)
 
     # A moc server constraints object contains one spatial and/or one properties constraint
     mocServerConstraints = MOCServerConstraints()
     mocServerConstraints.setSpatialConstraint(spatialConstraint)
-    mocServerConstraints.setPropertiesConstraint(propertiesConstraint)
+    #mocServerConstraints.setPropertiesConstraint(propertiesConstraint)
    
     # A query to the MOCServer accepts a : 
     # - MOCServerConstraints object defining all the spatial and properties constraints on the query
