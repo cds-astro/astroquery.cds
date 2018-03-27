@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 from __future__ import print_function
-        
+
 import astropy.coordinates as coord
 import urllib as ul
 from astropy.io import fits
@@ -19,17 +22,17 @@ class Format(Enum):
     imoc = 5
 
 class MOCServerResponseFormat(object):
-    def __init__(self, format=Format.ID, field_l=[], mocOrder=maxsize, caseSensitive=True, maxrec=None):
+    def __init__(self, format=Format.ID, field_l=[], moc_order=maxsize, case_sensitive=True, maxrec=None):
         if not isinstance(format, Format):
             print("The response format must have value in the ResponseFormat enum")
             raise TypeError
-       
-        if not isinstance(field_l, list) or not isinstance(caseSensitive, bool):
+
+        if not isinstance(field_l, list) or not isinstance(case_sensitive, bool):
             raise TypeError
 
         self.request_payload = {
             "fmt" : "json",
-            "casesensitive" : str(caseSensitive).lower()
+            "casesensitive" : str(case_sensitive).lower()
         }
 
         if maxrec and not isinstance(maxrec, int):
@@ -39,7 +42,7 @@ class MOCServerResponseFormat(object):
             self.request_payload.update({'get' : 'id'})
         elif format is Format.record:
             self.request_payload.update({'get' : 'record'})
-     
+
         # parse fields
             if field_l:
                 fields_str = str(field_l[0])
@@ -48,16 +51,16 @@ class MOCServerResponseFormat(object):
                         raise TypeError
                     fields_str += ', '
                     fields_str += field
-      
+
                 self.request_payload.update({
                     "fields" : fields_str
                 })
         elif format is Format.number:
             self.request_payload.update({'get' : 'number'})
         elif format in (Format.moc, Format.imoc):
-            if mocOrder != maxsize:
+            if moc_order != maxsize:
                 self.request_payload.update({
-                    "order" : mocOrder
+                    "order" : moc_order
                 })
             else:
                 self.request_payload.update({

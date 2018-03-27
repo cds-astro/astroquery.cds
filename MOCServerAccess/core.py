@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 from __future__ import print_function
 
@@ -47,7 +50,7 @@ class MOCServerQueryClass(BaseQuery):
     # TIMEOUT, etc.
     URL = conf.server
     TIMEOUT = conf.timeout
-							
+
     # all query methods are implemented with an "async" method that handles
     # making the actual HTTP request and returns the raw HTTP response, which
     # should be parsed by a separate _parse_result method.   The query_object
@@ -55,55 +58,49 @@ class MOCServerQueryClass(BaseQuery):
     # this:
     """
     def query_object(object_name, get_query_payload=False)
-	response = self.query_object_async(object_name,
-					   get_query_payload=get_query_payload)
-	if get_query_payload:
-	    return response
-	result = self._parse_result(response, verbose=verbose)
-	return result
+    response = self.query_object_async(object_name, get_query_payload=get_query_payload)
+    if get_query_payload:
+        return response
+    result = self._parse_result(response, verbose=verbose)
+    return result
     """
 
     def query_object_async(self, object_name, get_query_payload=False,
-	    cache=True):
+        cache=True):
         """
-	This method is for services that can parse object names. Otherwise
-	use :meth:`astroquery.template_module.TemplateClass.query_region`.
-	Put a brief description of what the class does here.
+        This method is for services that can parse object names. Otherwise
+        use :meth:`astroquery.template_module.TemplateClass.query_region`.
+        Put a brief description of what the class does here.
 
-	Parameters
-	----------
-	object_name : str
-	    name of the identifier to query.
-	get_query_payload : bool, optional
-	    This should default to False. When set to `True` the method
-	    should return the HTTP request parameters as a dict.
-	verbose : bool, optional
-	   This should default to `False`, when set to `True` it displays
-	   VOTable warnings.
-	any_other_param : <param_type>
-	    similarly list other parameters the method takes
+        Parameters
+        ----------
+        object_name : str
+            name of the identifier to query.
+        get_query_payload : bool, optional
+            This should default to False. When set to `True` the method
+            should return the HTTP request parameters as a dict.
 
-	Returns
-	-------
-	response : `requests.Response`
-	    The HTTP response returned from the service.
-	    All async methods should return the raw HTTP response.
+        Returns
+        -------
+        response : `requests.Response`
+            The HTTP response returned from the service.
+            All async methods should return the raw HTTP response.
 
-	Examples
-	--------
-	While this section is optional you may put in some examples that
-	show how to use the method. The examples are written similar to
-	standard doctests in python.
-        """
-	# the async method should typically have the following steps:
-	# 1. First construct the dictionary of the HTTP request params.
-	# 2. If get_query_payload is `True` then simply return this dict.
-	# 3. Else make the actual HTTP request and return the corresponding
-	#    HTTP response
-	# All HTTP requests are made via the `BaseQuery._request` method. This
-	# use a generic HTTP request method internally, similar to
-	# `requests.Session.request` of the Python Requests library, but
-	# with added caching-related tools.
+        Examples
+        --------
+        While this section is optional you may put in some examples that
+        show how to use the method. The examples are written similar to
+        standard doctests in python.
+            """
+    # the async method should typically have the following steps:
+    # 1. First construct the dictionary of the HTTP request params.
+    # 2. If get_query_payload is `True` then simply return this dict.
+    # 3. Else make the actual HTTP request and return the corresponding
+    #    HTTP response
+    # All HTTP requests are made via the `BaseQuery._request` method. This
+    # use a generic HTTP request method internally, similar to
+    # `requests.Session.request` of the Python Requests library, but
+    # with added caching-related tools.
 
 	# See below for an example:
 
@@ -148,33 +145,33 @@ class MOCServerQueryClass(BaseQuery):
 
     def query_region_async(self, constraints, responseFormat, get_query_payload, cache=True):
         """
-	Queries a region around the specified coordinates.
+        Queries a region around the specified coordinates.
 
-	Parameters
-	----------
-	coordinates : str or `astropy.coordinates`.
-	    coordinates around which to query
-	radius : str or `astropy.units.Quantity`.
-	    the radius of the cone search
-	intersect : determines if the region must overlap (default),
-	    enclosed, or cover the matching collection coverages
-	get_query_payload : bool, optional
-	    Just return the dict of HTTP request parameters.
-	verbose : bool, optional
-	    Display VOTable warnings or not.
+        Parameters
+        ----------
+        coordinates : str or `astropy.coordinates`.
+            coordinates around which to query
+        radius : str or `astropy.units.Quantity`.
+            the radius of the cone search
+        intersect : determines if the region must overlap (default),
+            enclosed, or cover the matching collection coverages
+        get_query_payload : bool, optional
+            Just return the dict of HTTP request parameters.
+        verbose : bool, optional
+            Display VOTable warnings or not.
 
-	Returns
-	-------
-	response : `requests.Response`
-	    The HTTP response returned from the service.
-	    All async methods should return the raw HTTP response.
+        Returns
+        -------
+        response : `requests.Response`
+        The HTTP response returned from the service.
+        All async methods should return the raw HTTP response.
         """
         request_payload = {}
         if not isinstance(constraints, MOCServerConstraints):
             print("Invalid constraints. Must be of MOCServerConstraints type")
             raise TypeError
         else:
-            request_payload = constraints.getRequestPayload()
+            request_payload = constraints.get_request_payload()
 
         if not isinstance(responseFormat, MOCServerResponseFormat):
             print("Invalid response format. Must be of MOCServerResponseFormat type")
