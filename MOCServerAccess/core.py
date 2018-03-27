@@ -47,7 +47,7 @@ class MOCServerQueryClass(BaseQuery):
     # TIMEOUT, etc.
     URL = conf.server
     TIMEOUT = conf.timeout
-
+							
     # all query methods are implemented with an "async" method that handles
     # making the actual HTTP request and returns the raw HTTP response, which
     # should be parsed by a separate _parse_result method.   The query_object

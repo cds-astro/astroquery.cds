@@ -30,20 +30,21 @@ if __name__ == '__main__':
     subExpr.addChild(OperandExpr.Union, PropertiesUniqExpr("moc_sky_fraction <= 0.01"), PropertiesUniqExpr("hips* = *"))
     expr.addChild(OperandExpr.Inter, subExpr, PropertiesUniqExpr("ID = *"))
     # definition of the the constraint
-    propertiesConstraint = PropertiesConstraint(expr)
+    #propertiesConstraint = PropertiesConstraint(expr)
+    propertiesConstraint = PropertiesConstraint(PropertiesUniqExpr("ID = CDS/J/A+A/375/*"))
 
     # A moc server constraints object contains one spatial and/or one properties constraint
     mocServerConstraints = MOCServerConstraints()
-    mocServerConstraints.setSpatialConstraint(spatialConstraint)
-    #mocServerConstraints.setPropertiesConstraint(propertiesConstraint)
+    #mocServerConstraints.setSpatialConstraint(spatialConstraint)
+    mocServerConstraints.setPropertiesConstraint(propertiesConstraint)
    
     # A query to the MOCServer accepts a : 
     # - MOCServerConstraints object defining all the spatial and properties constraints on the query
     # - MOCServerResponseFormat object defining the response format of the query
     response = MOCServerQuery.query_region(mocServerConstraints,
-    	MOCServerResponseFormat(responseFormat=Format.record, field_l=['ID', 'moc_sky_fraction']))
+    	MOCServerResponseFormat(format=Format.moc, mocOrder=14, field_l=['ID', 'moc_sky_fraction']))
     pprint.pprint(response)
-	
+		
     skycoord_list = [coordinates.SkyCoord(ra=57, dec=35, unit="deg"), coordinates.SkyCoord(ra=42, dec=34, unit="deg")]
     moc = MOC.from_coo_list(skycoord_list=skycoord_list, max_norder=5)
     #import pdb; pdb.set_trace()
