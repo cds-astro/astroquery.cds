@@ -67,21 +67,32 @@ def get_true_request_results():
 
     return load_true_result_query
 
-def test_request_results(get_true_request_results, get_request_results):
+
+"""List of all the constraint we want to test"""
+center = coordinates.SkyCoord(ra=10.8, dec=6.5, unit="deg")
+radius = coordinates.Angle(1.5, unit="deg")
+circle_sky_region = CircleSkyRegion(center, radius)
+cone_search_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect='overlaps')
+
+"""
+Combination of one spatial with a property constraint
+
+Each tuple(spatial, property) characterizes a specific query and is tested
+with regards to the true results stored in a file located in the data directory
+
+"""
+@pytest.mark.parametrize('spatial_constraint, property_constraint, data_file_id',
+    [(cone_search_constraint, None, 'CONE_SEARCH')])
+def test_request_results(spatial_constraint, property_constraint, data_file_id, \
+get_true_request_results, get_request_results):
     """
     Compare the request result obtained with the astroquery.Mocserver API
 
     with the one obtained on the http://alasky.unistra.fr/MocServer/query
     """
-
-
-    center = coordinates.SkyCoord(ra=10.8, dec=6.5, unit="deg")
-    radius = coordinates.Angle(1.5, unit="deg")
-    circle_sky_region = CircleSkyRegion(center, radius)
-
-    spatial_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect='overlaps')
-    request_results, true_request_results = get_request_results(spatial_constraint=spatial_constraint), \
-    get_true_request_results(data_file_id='CONE_SEARCH')
+    request_results, true_request_results = \
+    get_request_results(spatial_constraint=spatial_constraint, property_constraint=property_constraint), \
+    get_true_request_results(data_file_id=data_file_id)
     assert getsizeof(request_results) == getsizeof(true_request_results)
     assert request_results == true_request_results
 
