@@ -184,7 +184,7 @@ class MOCServerQueryClass(BaseQuery):
 
         print('Final Request payload before requesting to alasky')
         pprint(request_payload)
-        response = self._request('GET', self.URL, params=request_payload, timeout=self.TIMEOUT, cache=cache)
+        response = self._request('GET', url=self.URL, params=request_payload, timeout=self.TIMEOUT, cache=cache)
         return response
 
     def _parse_result_region(self, response, verbose=False):

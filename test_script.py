@@ -3,14 +3,14 @@
 
 from astropy import coordinates
 from regions import CircleSkyRegion, PolygonSkyRegion
-from MOCServerAccess.core import MOCServerQuery
-from MOCServerAccess.MOCServerConstraints import CircleSkyRegionSpatialConstraint, PolygonSkyRegionSpatialConstraint
-from MOCServerAccess.MOCServerConstraints import SpatialConstraint
-from MOCServerAccess.MOCServerConstraints import MOCServerConstraints
+from mocserver.core import MOCServerQuery
+from mocserver.MOCServerConstraints import CircleSkyRegionSpatialConstraint, PolygonSkyRegionSpatialConstraint
+from mocserver.MOCServerConstraints import SpatialConstraint
+from mocserver.MOCServerConstraints import MOCServerConstraints
 
-from MOCServerAccess.MOCServerPropertiesConstraints import PropertiesConstraint
-from MOCServerAccess.MOCServerPropertiesConstraints import PropertiesDualExpr, PropertiesUniqExpr, OperandExpr
-from MOCServerAccess.MOCServerResponseFormat import MOCServerResponseFormat, Format
+from mocserver.MOCServerPropertiesConstraints import PropertiesConstraint
+from mocserver.MOCServerPropertiesConstraints import PropertiesDualExpr, PropertiesUniqExpr, OperandExpr
+from mocserver.MOCServerResponseFormat import MOCServerResponseFormat, Format
 
 import pprint;
 

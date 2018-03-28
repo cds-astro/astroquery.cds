@@ -27,8 +27,7 @@ class PropertiesConstraint(object):
 		Parameters:
 		----
 			propertiesExpr : PropertiesExpr
-				the property expr
-
+                the property expr
         Exceptions:
         ----
             TypeError :

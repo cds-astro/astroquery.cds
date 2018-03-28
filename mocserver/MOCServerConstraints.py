@@ -41,7 +41,6 @@ class SpatialConstraint(ABC):
 	"""
 
 	@abstractmethod
-	# By default, the intersection of the region must overlaps with the MOCS in the MOCServer
 	def __init__(self, intersect="overlaps"):
 		"""
 		SpatialConstraint's constructor
