@@ -4,17 +4,20 @@
 from astropy import coordinates
 from regions import CircleSkyRegion, PolygonSkyRegion
 from mocserver.core import MOCServerQuery
-from mocserver.MOCServerConstraints import CircleSkyRegionSpatialConstraint, PolygonSkyRegionSpatialConstraint
+from mocserver.MOCServerConstraints import CircleSkyRegionSpatialConstraint, \
+PolygonSkyRegionSpatialConstraint, MocSpatialConstraint
 from mocserver.MOCServerConstraints import SpatialConstraint
 from mocserver.MOCServerConstraints import MOCServerConstraints
 
 from mocserver.MOCServerPropertiesConstraints import PropertiesConstraint
-from mocserver.MOCServerPropertiesConstraints import PropertiesDualExpr, PropertiesUniqExpr, OperandExpr
+from mocserver.MOCServerPropertiesConstraints import ParentNode, ChildNode, OperandExpr
 from mocserver.MOCServerResponseFormat import MOCServerResponseFormat, Format
 
 import pprint;
 
 from mocpy import MOC
+from astroquery.vizier import Vizier
+
 
 if __name__ == '__main__':
     # Spatial constraint definition
@@ -25,32 +28,36 @@ if __name__ == '__main__':
     polygon_sky_region = PolygonSkyRegion(vertices=coordinates.SkyCoord([57.376, 56.391, 56.025, 56.616], [24.053, 24.622, 24.049, 24.290], frame="icrs", unit="deg"))
     spatial_constraint = PolygonSkyRegionSpatialConstraint(polygon_sky_region, "overlaps")
 
+    Vizier.ROW_LIMIT = -1
+    table = Vizier.get_catalogs('I/293/npm2cros')[0]
+    moc = MOC.from_file("mocserver/tests/data/moc.fits")
+    spatial_constraint = MocSpatialConstraint(moc=moc, intersect='overlaps')
     # Properties constraint definition
     # An expression is defined as a tree-like data structure
     # Each equalities are linked by an operand (AND, OR, NAND) forming the final expression
     # to send to the http mocserver
     # definition of the the constraint
-    properties_constraint = PropertiesConstraint(PropertiesDualExpr(
+    properties_constraint = PropertiesConstraint(ParentNode(
         OperandExpr.Inter,
-        PropertiesDualExpr(
+        ParentNode(
             OperandExpr.Union,
-            PropertiesUniqExpr("moc_sky_fraction <= 0.01"),
-            PropertiesUniqExpr("hips* = *")
+            ChildNode("moc_sky_fraction <= 0.01"),
+            ChildNode("hips* = *")
         ),
-        PropertiesUniqExpr("ID = *")
+        ChildNode("ID = *")
     ))
-    #propertiesConstraint = PropertiesConstraint(PropertiesUniqExpr("ID = CDS/J/A+A/375/*"))
+    #propertiesConstraint = PropertiesConstraint(ChildNode("ID = CDS/J/A+A/375/*"))
 
     # A moc server constraints object contains one spatial and/or one properties constraint
     moc_server_constraints = MOCServerConstraints()
-    #mocServerConstraints.set_spatial_constraint(spatial_constraint)
-    moc_server_constraints.set_properties_constraint(properties_constraint)
+    moc_server_constraints.set_spatial_constraint(spatial_constraint)
+    #moc_server_constraints.set_properties_constraint(properties_constraint)
 
     # A query to the MOCServer accepts a : 
     # - MOCServerConstraints object defining all the spatial and properties constraints on the query
     # - MOCServerResponseFormat object defining the response format of the query
     response = MOCServerQuery.query_region(moc_server_constraints,
-                                           MOCServerResponseFormat(format=Format.moc,
+                                           MOCServerResponseFormat(format=Format.ID,
                                                                    moc_order=14,
                                                                    field_l=['ID', 'moc_sky_fraction']))
     pprint.pprint(response)

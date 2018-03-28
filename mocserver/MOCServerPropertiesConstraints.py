@@ -61,7 +61,7 @@ class PropertiesExpr(ABC):
 
     Expressions are built like a binary tree. A parent expression can
     have one or two children. The parent defines an operand between
-    its two children (if it is a PropertiesDualExpr) or nothing in
+    its two children (if it is a ParentNode) or nothing in
     the other case (only one child).
 
     """
@@ -76,7 +76,7 @@ class PropertiesExpr(ABC):
 
         pass
 
-class PropertiesUniqExpr(PropertiesExpr):
+class ChildNode(PropertiesExpr):
     """Leaf expression node of the binary tree expression"""
 
     def __init__(self, condition):
@@ -86,7 +86,7 @@ class PropertiesUniqExpr(PropertiesExpr):
     def eval(self):
         return str(self.condition)
 
-class PropertiesDualExpr(PropertiesExpr):
+class ParentNode(PropertiesExpr):
     """Parent expression node of the binary tree expression"""
 
     def __init__(self, operand, left_expr, right_expr):
@@ -110,9 +110,9 @@ class PropertiesDualExpr(PropertiesExpr):
         elif self.operand is OperandExpr.Union:
             operand_str = " || "
 
-        if isinstance(self.left_expr, PropertiesDualExpr):
+        if isinstance(self.left_expr, ParentNode):
             left_expr_str = '(' + left_expr_str + ')'
-        if isinstance(self.right_expr, PropertiesDualExpr):
+        if isinstance(self.right_expr, ParentNode):
             right_expr_str = '(' + right_expr_str + ')'
 
         return left_expr_str + operand_str + right_expr_str

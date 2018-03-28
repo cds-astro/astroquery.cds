@@ -7,7 +7,11 @@ from __future__ import print_function
 import astropy.coordinates as coord
 from regions import CircleSkyRegion
 from regions import PolygonSkyRegion
+from mocpy import MOC
+
 from abc import abstractmethod, ABC
+
+from os import remove
 
 class MOCServerConstraints(object):
     def __init__(self):
@@ -167,3 +171,20 @@ class PolygonSkyRegionSpatialConstraint(SpatialConstraint):
             polygonSTC += " " + polygonSkyRegion.vertices.ra[i].to_string(decimal=True) + " " + polygonSkyRegion.vertices.dec[i].to_string(decimal=True)
         print(polygonSTC)
         return polygonSTC
+
+class MocSpatialConstraint(SpatialConstraint):
+
+    def __init__(self, moc, intersect):
+        if not isinstance(moc, MOC):
+            raise TypeError
+
+        super(MocSpatialConstraint, self).__init__(intersect)
+        moc.write('tmp_moc.json', format='json')
+
+        with open('tmp_moc.json', 'r') as f_in:
+            content = f_in.read()
+
+        remove('tmp_moc.json')
+        self.request_payload.update({'moc' : content})
+        print(self.request_payload)
+

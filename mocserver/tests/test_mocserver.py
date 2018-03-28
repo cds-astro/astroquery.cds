@@ -10,7 +10,7 @@ from mocserver.MOCServerConstraints import MOCServerConstraints
 from mocserver.MOCServerConstraints import CircleSkyRegionSpatialConstraint
 from mocserver.MOCServerConstraints import PolygonSkyRegionSpatialConstraint
 from mocserver.MOCServerPropertiesConstraints import PropertiesConstraint, \
-PropertiesDualExpr, PropertiesUniqExpr, OperandExpr
+ParentNode, ChildNode, OperandExpr
 
 from mocserver.MOCServerResponseFormat import MOCServerResponseFormat, Format
 
@@ -87,31 +87,31 @@ polygon2 = PolygonSkyRegion(vertices=coordinates.SkyCoord([58.376, 53.391, 56.02
 polygon_search_constraint = PolygonSkyRegionSpatialConstraint(polygon1, intersect='overlaps')
 
 # PROPERTY CONSTRAINTS DEFINITIONS
-properties_ex = PropertiesConstraint(PropertiesDualExpr(
+properties_ex = PropertiesConstraint(ParentNode(
     OperandExpr.Inter,
-    PropertiesDualExpr(
+    ParentNode(
         OperandExpr.Union,
-        PropertiesUniqExpr("moc_sky_fraction <= 0.01"),
-        PropertiesUniqExpr("hips* = *")
+        ChildNode("moc_sky_fraction <= 0.01"),
+        ChildNode("hips* = *")
     ),
-    PropertiesUniqExpr("ID = *")
+    ChildNode("ID = *")
 ))
 
 properties_hips_from_saada_alasky = \
-        PropertiesConstraint(PropertiesDualExpr(
+        PropertiesConstraint(ParentNode(
             OperandExpr.Inter,
-            PropertiesUniqExpr("hips_service_url*=http://saada*"),
-            PropertiesUniqExpr("hips_service_url*=http://alasky.*"))
+            ChildNode("hips_service_url*=http://saada*"),
+            ChildNode("hips_service_url*=http://alasky.*"))
         )
 
 properties_hips_gaia = PropertiesConstraint(
-    PropertiesDualExpr(OperandExpr.Subtr,
-                       PropertiesDualExpr(OperandExpr.Inter,
-                                          PropertiesDualExpr(OperandExpr.Union,
-                                                             PropertiesUniqExpr("obs_*=*gaia*"),
-                                                             PropertiesUniqExpr("ID=*gaia*")),
-                                          PropertiesUniqExpr("hips_service_url=*")),
-                       PropertiesUniqExpr("obs_*=*simu")))
+    ParentNode(OperandExpr.Subtr,
+                       ParentNode(OperandExpr.Inter,
+                                          ParentNode(OperandExpr.Union,
+                                                             ChildNode("obs_*=*gaia*"),
+                                                             ChildNode("ID=*gaia*")),
+                                          ChildNode("hips_service_url=*")),
+                       ChildNode("obs_*=*simu")))
 
 """
 Combination of one spatial with a property constraint
@@ -137,7 +137,6 @@ get_true_request_results, get_request_results):
     get_request_results(spatial_constraint=spatial_constraint, property_constraint=property_constraint), \
     get_true_request_results(data_file_id=data_file_id)
 
-    print(true_request_results)
     assert getsizeof(request_results) == getsizeof(true_request_results)
     assert request_results == true_request_results
 
@@ -235,5 +234,3 @@ def test_get_attribute(get_attr, get_attr_str, init_request):
     result = MOCServerQuery.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
 
     assert result['get'] == get_attr_str
-
-
