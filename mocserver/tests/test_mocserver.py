@@ -9,6 +9,8 @@ from mocserver.core import MOCServerQuery, MOCServerQueryClass
 from mocserver.MOCServerConstraints import MOCServerConstraints
 from mocserver.MOCServerConstraints import CircleSkyRegionSpatialConstraint
 from mocserver.MOCServerConstraints import PolygonSkyRegionSpatialConstraint
+from mocserver.MOCServerPropertiesConstraints import PropertiesConstraint, \
+PropertiesDualExpr, PropertiesUniqExpr, OperandExpr
 
 from mocserver.MOCServerResponseFormat import MOCServerResponseFormat, Format
 
@@ -20,6 +22,10 @@ from regions import CircleSkyRegion, PolygonSkyRegion
 
 DATA_FILES = {
 	'CONE_SEARCH' : 'cone_search.json',
+	'POLYGON_SEARCH' : 'polygon_search.json',
+	'PROPERTIES_SEARCH' : 'properties.json',
+	'HIPS_FROM_SAADA_AND_ALASKY' : 'hips_from_saada_alasky.json',
+	'HIPS_GAIA' : 'hips_gaia.json'
 }
 
 @pytest.fixture
@@ -68,11 +74,44 @@ def get_true_request_results():
     return load_true_result_query
 
 
+
 """List of all the constraint we want to test"""
+# SPATIAL CONSTRAINTS DEFINITIONS
 center = coordinates.SkyCoord(ra=10.8, dec=6.5, unit="deg")
 radius = coordinates.Angle(1.5, unit="deg")
 circle_sky_region = CircleSkyRegion(center, radius)
 cone_search_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect='overlaps')
+
+polygon1 = PolygonSkyRegion(vertices=coordinates.SkyCoord([57.376, 56.391, 56.025, 56.616], [24.053, 24.622, 24.049, 24.291], frame="icrs", unit="deg"))
+polygon2 = PolygonSkyRegion(vertices=coordinates.SkyCoord([58.376, 53.391, 56.025, 54.616], [24.053, 25.622, 22.049, 27.291], frame="icrs", unit="deg"))
+polygon_search_constraint = PolygonSkyRegionSpatialConstraint(polygon1, intersect='overlaps')
+
+# PROPERTY CONSTRAINTS DEFINITIONS
+properties_ex = PropertiesConstraint(PropertiesDualExpr(
+    OperandExpr.Inter,
+    PropertiesDualExpr(
+        OperandExpr.Union,
+        PropertiesUniqExpr("moc_sky_fraction <= 0.01"),
+        PropertiesUniqExpr("hips* = *")
+    ),
+    PropertiesUniqExpr("ID = *")
+))
+
+properties_hips_from_saada_alasky = \
+        PropertiesConstraint(PropertiesDualExpr(
+            OperandExpr.Inter,
+            PropertiesUniqExpr("hips_service_url*=http://saada*"),
+            PropertiesUniqExpr("hips_service_url*=http://alasky.*"))
+        )
+
+properties_hips_gaia = PropertiesConstraint(
+    PropertiesDualExpr(OperandExpr.Subtr,
+                       PropertiesDualExpr(OperandExpr.Inter,
+                                          PropertiesDualExpr(OperandExpr.Union,
+                                                             PropertiesUniqExpr("obs_*=*gaia*"),
+                                                             PropertiesUniqExpr("ID=*gaia*")),
+                                          PropertiesUniqExpr("hips_service_url=*")),
+                       PropertiesUniqExpr("obs_*=*simu")))
 
 """
 Combination of one spatial with a property constraint
@@ -82,7 +121,11 @@ with regards to the true results stored in a file located in the data directory
 
 """
 @pytest.mark.parametrize('spatial_constraint, property_constraint, data_file_id',
-    [(cone_search_constraint, None, 'CONE_SEARCH')])
+    [(cone_search_constraint, None, 'CONE_SEARCH'),
+    (polygon_search_constraint, None, 'POLYGON_SEARCH'),
+    (None, properties_ex, 'PROPERTIES_SEARCH'),
+    (None, properties_hips_from_saada_alasky, 'HIPS_FROM_SAADA_AND_ALASKY'),
+    (None, properties_hips_gaia, 'HIPS_GAIA')])
 def test_request_results(spatial_constraint, property_constraint, data_file_id, \
 get_true_request_results, get_request_results):
     """
@@ -93,6 +136,8 @@ get_true_request_results, get_request_results):
     request_results, true_request_results = \
     get_request_results(spatial_constraint=spatial_constraint, property_constraint=property_constraint), \
     get_true_request_results(data_file_id=data_file_id)
+
+    print(true_request_results)
     assert getsizeof(request_results) == getsizeof(true_request_results)
     assert request_results == true_request_results
 
@@ -137,8 +182,6 @@ def test_cone_search_spatial_request(RA, DEC, RADIUS, init_request):
     request_payload['RA'] == str(RA) and \
     request_payload['SR'] == str(RADIUS)
 
-polygon1 = PolygonSkyRegion(vertices=coordinates.SkyCoord([57.376, 56.391, 56.025, 56.616], [24.053, 24.622, 24.049, 24.291], frame="icrs", unit="deg"))
-polygon2 = PolygonSkyRegion(vertices=coordinates.SkyCoord([58.376, 53.391, 56.025, 54.616], [24.053, 25.622, 22.049, 27.291], frame="icrs", unit="deg"))
 @pytest.mark.parametrize('poly, poly_payload',
 [(polygon1, 'Polygon 57.376 24.053 56.391 24.622 56.025 24.049 56.616 24.291'),
 (polygon2, 'Polygon 58.376 24.053 53.391 25.622 56.025 22.049 54.616 27.291')])

@@ -104,7 +104,7 @@ class PropertiesDualExpr(PropertiesExpr):
         left_expr_str = self.left_expr.eval()
         right_expr_str = self.right_expr.eval()
 
-        operand_str = " !& "
+        operand_str = " &! "
         if self.operand is OperandExpr.Inter:
             operand_str = " && "
         elif self.operand is OperandExpr.Union:
