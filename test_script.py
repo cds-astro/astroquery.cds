@@ -27,8 +27,8 @@ if __name__ == '__main__':
     polygon_sky_region = PolygonSkyRegion(vertices=coordinates.SkyCoord([57.376, 56.391, 56.025, 56.616], [24.053, 24.622, 24.049, 24.290], frame="icrs", unit="deg"))
     spatial_constraint = PolygonSkyRegionSpatialConstraint(polygon_sky_region, "overlaps")
 
-    #spatial_constraint = MocSpatialConstraint.from_file(filename='mocserver/tests/data/moc.fits', intersect='overlaps')
-    spatial_constraint = MocSpatialConstraint.from_url(url='http://alasky.u-strasbg.fr/SDSS/DR9/color/Moc.fits', intersect='overlaps')
+    spatial_constraint = MocSpatialConstraint.from_file(filename='mocserver/tests/data/moc.fits', intersect='overlaps')
+    #spatial_constraint = MocSpatialConstraint.from_url(url='http://alasky.u-strasbg.fr/SDSS/DR9/color/Moc.fits', intersect='overlaps')
     # Properties constraint definition
     # An expression is defined as a tree-like data structure
     # Each equalities are linked by an operand (AND, OR, NAND) forming the final expression

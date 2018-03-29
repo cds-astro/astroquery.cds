@@ -186,7 +186,15 @@ class MOCServerQueryClass(BaseQuery):
 
         print('Final Request payload before requesting to alasky')
         pprint(request_payload)
-        response = self._request('GET', url=self.URL, params=request_payload, timeout=self.TIMEOUT, cache=cache)
+        if 'moc' in request_payload:
+            filename = request_payload['moc']
+            with open(filename, 'rb') as f:
+                request_payload.pop('moc')
+
+                response = self._request('GET', url=self.URL, params=request_payload, timeout=self.TIMEOUT, cache=False, files={'moc' : f})
+        else:
+            response = self._request('GET', url=self.URL, params=request_payload, timeout=self.TIMEOUT, cache=cache)
+
         return response
 
     def _parse_result_region(self, response, verbose=False):
