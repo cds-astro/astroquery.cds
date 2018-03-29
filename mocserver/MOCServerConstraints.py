@@ -13,6 +13,9 @@ from abc import abstractmethod, ABC
 
 from os import remove
 
+from urllib.request import Request, urlopen
+from urllib.error import URLError
+
 class MOCServerConstraints(object):
     def __init__(self):
         self.spatial_constraint = None
@@ -45,7 +48,7 @@ class SpatialConstraint(ABC):
 	"""
 
 	@abstractmethod
-	def __init__(self, intersect="overlaps"):
+	def __init__(self, intersect):
 		"""
 		SpatialConstraint's constructor
 
@@ -83,7 +86,7 @@ class CircleSkyRegionSpatialConstraint(SpatialConstraint):
 
 	"""
 
-	def __init__(self, circleSkyRegion, intersect):
+	def __init__(self, circleSkyRegion, intersect='overlaps'):
 		"""
 		CircleSkyRegionSpatialConstraint's constructor
 
@@ -123,7 +126,7 @@ class PolygonSkyRegionSpatialConstraint(SpatialConstraint):
 
 	"""
 
-    def __init__(self, polygonSkyRegion, intersect):
+    def __init__(self, polygonSkyRegion, intersect='overlaps'):
         """
 		PolygonSkyRegionSpatialConstraint's constructor
 
@@ -173,18 +176,40 @@ class PolygonSkyRegionSpatialConstraint(SpatialConstraint):
         return polygonSTC
 
 class MocSpatialConstraint(SpatialConstraint):
+    def __init__(self, data, intersect='overlaps'):
+        """
+        Contruct a constraint based on the surface covered by a moc
 
-    def __init__(self, moc, intersect):
-        if not isinstance(moc, MOC):
+        Parameters
+        ----
+            data :
+                - can be a mocpy.MOC defined moc
+                - can be an url used by the MocServer to retrieve
+                the corresponding moc
+        """
+        super(MocSpatialConstraint, self).__init__(intersect)
+        if isinstance(data, MOC):
+            data.write('tmp_moc.json', format='json')
+
+            with open('tmp_moc.json', 'r') as f_in:
+                content = f_in.read()
+
+            remove('tmp_moc.json')
+            self.request_payload.update({'moc' : content})
+        elif isinstance(data, str):
+            # If the user gives an URL
+            self.request_payload.update({'url' : data})
+        else:
             raise TypeError
 
-        super(MocSpatialConstraint, self).__init__(intersect)
-        moc.write('tmp_moc.json', format='json')
+    @classmethod
+    def from_file(cls, filename, intersect='overlaps'):
+        try:
+            moc = MOC.from_file(filename)
+        except Exception:
+            raise ValueError
+        return cls(data=moc, intersect=intersect)
 
-        with open('tmp_moc.json', 'r') as f_in:
-            content = f_in.read()
-
-        remove('tmp_moc.json')
-        self.request_payload.update({'moc' : content})
-        print(self.request_payload)
-
+    @classmethod
+    def from_url(cls, url, intersect='overlaps'):
+        return cls(data=url, intersect=intersect)

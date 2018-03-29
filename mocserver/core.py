@@ -140,6 +140,8 @@ class MOCServerQueryClass(BaseQuery):
             return response
 
         #TODO MOCServerResponse
+        print(response)
+        import pdb; pdb.set_trace()
         result = self._parse_result_region(response)
         return result
 
@@ -194,7 +196,6 @@ class MOCServerQueryClass(BaseQuery):
 	# try to parse the result into an astropy.Table, else
 	# return the raw result with an informative error message.
         return response.json()
-
 
     # the methods above call the private _parse_result method.
     # This should parse the raw HTTP response and return it as
