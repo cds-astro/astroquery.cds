@@ -30,8 +30,8 @@ conf = Conf()
 
 # Now import your public class
 # Should probably have the same name as your module
-from .core import MOCServerQuery, MOCServerQueryClass
+from .core import mocserver, MocserverClass
 
-__all__ = ['MOCServerQuery', 'MOCServerQueryClass',
+__all__ = ['mocserver', 'MocserverClass',
            'Conf', 'conf',
 ]

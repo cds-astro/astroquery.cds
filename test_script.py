@@ -3,15 +3,12 @@
 
 from astropy import coordinates
 from regions import CircleSkyRegion, PolygonSkyRegion
-from mocserver.core import MOCServerQuery
-from mocserver.MOCServerConstraints import CircleSkyRegionSpatialConstraint, \
-PolygonSkyRegionSpatialConstraint, MocSpatialConstraint
-from mocserver.MOCServerConstraints import SpatialConstraint
-from mocserver.MOCServerConstraints import MOCServerConstraints
+from mocserver.core import mocserver
+from mocserver.spatial_constraints import *
+from mocserver.constraints import Constraints
 
-from mocserver.MOCServerPropertiesConstraints import PropertiesConstraint
-from mocserver.MOCServerPropertiesConstraints import ParentNode, ChildNode, OperandExpr
-from mocserver.MOCServerResponseFormat import MOCServerResponseFormat, Format
+from mocserver.property_constraint import *
+from mocserver.output_format import *
 
 import pprint;
 
@@ -34,7 +31,7 @@ if __name__ == '__main__':
     # Each equalities are linked by an operand (AND, OR, NAND) forming the final expression
     # to send to the http mocserver
     # definition of the the constraint
-    properties_constraint = PropertiesConstraint(ParentNode(
+    properties_constraint = PropertyConstraint(ParentNode(
         OperandExpr.Inter,
         ParentNode(
             OperandExpr.Union,
@@ -46,15 +43,15 @@ if __name__ == '__main__':
     #propertiesConstraint = PropertiesConstraint(ChildNode("ID = CDS/J/A+A/375/*"))
 
     # A moc server constraints object contains one spatial and/or one properties constraint
-    moc_server_constraints = MOCServerConstraints()
-    moc_server_constraints.set_spatial_constraint(spatial_constraint)
+    moc_server_constraints = Constraints()
+    moc_server_constraints.spatial_constraint = spatial_constraint
     #moc_server_constraints.set_properties_constraint(properties_constraint)
 
     # A query to the MOCServer accepts a : 
     # - MOCServerConstraints object defining all the spatial and properties constraints on the query
     # - MOCServerResponseFormat object defining the response format of the query
-    response = MOCServerQuery.query_region(moc_server_constraints,
-                                           MOCServerResponseFormat(format=Format.ID,
+    response = mocserver.query_region(moc_server_constraints,
+                                           OutputFormat(format=Format.id,
                                                                    moc_order=14,
                                                                    field_l=['ID', 'moc_sky_fraction']))
     pprint.pprint(response)

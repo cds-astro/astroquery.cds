@@ -27,11 +27,11 @@ from astroquery.utils import async_to_sync
 # import configurable items declared in __init__.py
 from . import conf
 # import MOCServerConstraints and MOCServerResults
-from .MOCServerConstraints import MOCServerConstraints
-from .MOCServerResponseFormat import MOCServerResponseFormat
+from .constraints import Constraints
+from .output_format import OutputFormat
 
 # export all the public classes and methods
-__all__ = ['MOCServerQuery', 'MOCServerQueryClass']
+__all__ = ['mocserver', 'MocserverClass']
 
 # declare global variables and constants if any
 
@@ -39,7 +39,7 @@ __all__ = ['MOCServerQuery', 'MOCServerQueryClass']
 # Now begin your main class
 # should be decorated with the async_to_sync imported previously
 @async_to_sync
-class MOCServerQueryClass(BaseQuery):
+class MocserverClass(BaseQuery):
 
     """
     Not all the methods below are necessary but these cover most of the common
@@ -134,18 +134,17 @@ class MOCServerQueryClass(BaseQuery):
 
     # similarly we write a query_region_async method that makes the
     # actual HTTP request and returns the HTTP response
-    def query_region(self, constraints, responseFormat=MOCServerResponseFormat(), get_query_payload=False):
-        response = self.query_region_async(constraints, responseFormat, get_query_payload)
+    def query_region(self, constraints, output_format=OutputFormat(), get_query_payload=False):
+        response = self.query_region_async(constraints, output_format, get_query_payload)
         if get_query_payload:
             return response
 
         #TODO MOCServerResponse
         print(response)
-        import pdb; pdb.set_trace()
         result = self._parse_result_region(response)
         return result
 
-    def query_region_async(self, constraints, responseFormat, get_query_payload, cache=True):
+    def query_region_async(self, constraints, output_format, get_query_payload, cache=True):
         """
         Queries a region around the specified coordinates.
 
@@ -169,17 +168,17 @@ class MOCServerQueryClass(BaseQuery):
         All async methods should return the raw HTTP response.
         """
         request_payload = {}
-        if not isinstance(constraints, MOCServerConstraints):
+        if not isinstance(constraints, Constraints):
             print("Invalid constraints. Must be of MOCServerConstraints type")
             raise TypeError
         else:
-            request_payload = constraints.get_request_payload()
+            request_payload = constraints.payload
 
-        if not isinstance(responseFormat, MOCServerResponseFormat):
+        if not isinstance(output_format, OutputFormat):
             print("Invalid response format. Must be of MOCServerResponseFormat type")
             raise TypeError
         else:
-            request_payload.update(responseFormat.getRequestPayload())
+            request_payload.update(output_format.get_request_payload())
 
         if get_query_payload:
             return request_payload
@@ -253,7 +252,7 @@ class MOCServerQueryClass(BaseQuery):
     """
 
 # the default tool for users to interact with is an instance of the Class
-MOCServerQuery = MOCServerQueryClass()
+mocserver = MocserverClass()
 
 # once your class is done, tests should be written
 # See ./tests for examples on this

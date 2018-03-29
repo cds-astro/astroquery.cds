@@ -15,14 +15,14 @@ from enum import Enum
 from sys import maxsize
 
 class Format(Enum):
-    ID = 1,
+    id = 1,
     record = 2,
     number = 3,
     moc = 4,
     imoc = 5
 
-class MOCServerResponseFormat(object):
-    def __init__(self, format=Format.ID, field_l=[], moc_order=maxsize, case_sensitive=True, maxrec=None):
+class OutputFormat(object):
+    def __init__(self, format=Format.id, field_l=[], moc_order=maxsize, case_sensitive=True, maxrec=None):
         if not isinstance(format, Format):
             print("The response format must have value in the ResponseFormat enum")
             raise TypeError
@@ -38,7 +38,7 @@ class MOCServerResponseFormat(object):
         if maxrec and not isinstance(maxrec, int):
             raise TypeError
 
-        if format is Format.ID:
+        if format is Format.id:
             self.request_payload.update({'get' : 'id'})
         elif format is Format.record:
             self.request_payload.update({'get' : 'record'})
@@ -76,5 +76,5 @@ class MOCServerResponseFormat(object):
         if maxrec:
             self.request_payload.update({'MAXREC' : str(maxrec)})
 
-    def getRequestPayload(self):
+    def get_request_payload(self):
         return self.request_payload

@@ -7,9 +7,9 @@ from __future__ import print_function
 from abc import abstractmethod, ABC
 from enum import Enum
 
-class PropertiesConstraint(object):
+class PropertyConstraint(object):
     """
-    PropertiesConstraint's class definition
+    PropertyConstraint's class definition
 
     The user can specify a constraint acting only
     on properties too. The MOCServer asks for an
@@ -21,7 +21,7 @@ class PropertiesConstraint(object):
 
     """
 
-    def __init__(self, propertiesExpr):
+    def __init__(self, expression):
         """PropertiesConstraint's constructor
 
 		Parameters:
@@ -35,15 +35,15 @@ class PropertiesConstraint(object):
                 must be of type PropertiesExpr
 		"""
 
-        if not isinstance(propertiesExpr, PropertiesExpr):
+        if not isinstance(expression, PropertiesExpr):
             raise TypeError
 
-        self.propertiesExpr = propertiesExpr
+        self.expr = expression
         self.compute_payload()
 
     def compute_payload(self):
         """Update the property constraints payload"""
-        self.request_payload = {'expr' : self.propertiesExpr.eval()}
+        self.request_payload = {'expr' : self.expr.eval()}
 
     def __repr__(self):
         str = "Properties constraints' request payload :\n{0}".format(self.request_payload)

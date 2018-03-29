@@ -4,15 +4,12 @@ import os
 import json
 from sys import getsizeof
 
-from mocserver.core import MOCServerQuery, MOCServerQueryClass
+from mocserver.core import mocserver
 
-from mocserver.MOCServerConstraints import MOCServerConstraints
-from mocserver.MOCServerConstraints import CircleSkyRegionSpatialConstraint
-from mocserver.MOCServerConstraints import PolygonSkyRegionSpatialConstraint
-from mocserver.MOCServerPropertiesConstraints import PropertiesConstraint, \
-ParentNode, ChildNode, OperandExpr
-
-from mocserver.MOCServerResponseFormat import MOCServerResponseFormat, Format
+from mocserver.constraints import Constraints
+from mocserver.spatial_constraints import *
+from mocserver.property_constraint import *
+from mocserver.output_format import *
 
 from astroquery.utils.testing_tools import MockResponse
 from astroquery.utils import commons
@@ -28,6 +25,16 @@ DATA_FILES = {
 	'HIPS_GAIA' : 'hips_gaia.json'
 }
 
+def data_path(filename):
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+    return os.path.join(data_dir, filename)
+
+@pytest.fixture
+def init_request():
+    moc_server_constraints = Constraints()
+    moc_server_format = OutputFormat()
+    return (moc_server_constraints, moc_server_format)
+
 @pytest.fixture
 def patch_get(request):
     try:
@@ -37,6 +44,11 @@ def patch_get(request):
     mp.setattr(MOCServerQuery, '_request', get_mockreturn)
     return mp
 
+def get_mockreturn(method, url, params=None, timeout=10, **kwargs):
+    filename = data_path(DATA_FILES[params['get']])
+    content = open(filename, 'rb').read()
+    return MockResponse(content)
+
 @pytest.fixture
 def get_request_results(init_request):
     """Perform the request using the astroquery.MocServer  API"""
@@ -44,13 +56,11 @@ def get_request_results(init_request):
     def process_query(spatial_constraint=None, property_constraint=None):
         assert spatial_constraint or property_constraint
         moc_server_constraints, moc_server_format = init_request
-        if spatial_constraint:
-            moc_server_constraints.set_spatial_constraint(spatial_constraint)
 
-        if property_constraint:
-            moc_server_constraints.set_properties_constraint(property_constraint)
+        moc_server_constraints.spatial_constraint = spatial_constraint
+        moc_server_constraints.properties_constraint = property_constraint
 
-        request_result = MOCServerQuery.query_region(moc_server_constraints, moc_server_format)
+        request_result = mocserver.query_region(moc_server_constraints, moc_server_format)
         return request_result
     return process_query
 
@@ -73,8 +83,6 @@ def get_true_request_results():
 
     return load_true_result_query
 
-
-
 """List of all the constraint we want to test"""
 # SPATIAL CONSTRAINTS DEFINITIONS
 center = coordinates.SkyCoord(ra=10.8, dec=6.5, unit="deg")
@@ -87,7 +95,7 @@ polygon2 = PolygonSkyRegion(vertices=coordinates.SkyCoord([58.376, 53.391, 56.02
 polygon_search_constraint = PolygonSkyRegionSpatialConstraint(polygon1, intersect='overlaps')
 
 # PROPERTY CONSTRAINTS DEFINITIONS
-properties_ex = PropertiesConstraint(ParentNode(
+properties_ex = PropertyConstraint(ParentNode(
     OperandExpr.Inter,
     ParentNode(
         OperandExpr.Union,
@@ -98,13 +106,13 @@ properties_ex = PropertiesConstraint(ParentNode(
 ))
 
 properties_hips_from_saada_alasky = \
-        PropertiesConstraint(ParentNode(
+        PropertyConstraint(ParentNode(
             OperandExpr.Inter,
             ChildNode("hips_service_url*=http://saada*"),
             ChildNode("hips_service_url*=http://alasky.*"))
         )
 
-properties_hips_gaia = PropertiesConstraint(
+properties_hips_gaia = PropertyConstraint(
     ParentNode(OperandExpr.Subtr,
                        ParentNode(OperandExpr.Inter,
                                           ParentNode(OperandExpr.Union,
@@ -120,6 +128,7 @@ Each tuple(spatial, property) characterizes a specific query and is tested
 with regards to the true results stored in a file located in the data directory
 
 """
+
 @pytest.mark.parametrize('spatial_constraint, property_constraint, data_file_id',
     [(cone_search_constraint, None, 'CONE_SEARCH'),
     (polygon_search_constraint, None, 'POLYGON_SEARCH'),
@@ -140,21 +149,6 @@ get_true_request_results, get_request_results):
     assert getsizeof(request_results) == getsizeof(true_request_results)
     assert request_results == true_request_results
 
-def get_mockreturn(method, url, params=None, timeout=10, **kwargs):
-    filename = data_path(DATA_FILES[params['get']])
-    content = open(filename, 'rb').read()
-    return MockResponse(content)
-
-def data_path(filename):
-    data_dir = os.path.join(os.path.dirname(__file__), 'data')
-    return os.path.join(data_dir, filename)
-
-@pytest.fixture
-def init_request():
-    moc_server_constraints = MOCServerConstraints()
-    moc_server_format = MOCServerResponseFormat()
-    return (moc_server_constraints, moc_server_format)
-
 """
 Spatial Constraints requests
 
@@ -174,9 +168,9 @@ def test_cone_search_spatial_request(RA, DEC, RADIUS, init_request):
     circle_sky_region = CircleSkyRegion(center, radius)
 
     spatial_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect="overlaps")
-    moc_server_constraints.set_spatial_constraint(spatial_constraint)
+    moc_server_constraints.spatial_constraint = spatial_constraint
 
-    request_payload = MOCServerQuery.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
+    request_payload = mocserver.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
     assert request_payload['DEC'] == str(DEC) and \
     request_payload['RA'] == str(RA) and \
     request_payload['SR'] == str(RADIUS)
@@ -187,9 +181,9 @@ def test_cone_search_spatial_request(RA, DEC, RADIUS, init_request):
 def test_polygon_spatial_request(poly, poly_payload, init_request):
     moc_server_constraints, moc_server_format = init_request
     spatial_constraint = PolygonSkyRegionSpatialConstraint(poly, intersect="overlaps")
-    moc_server_constraints.set_spatial_constraint(spatial_constraint)
+    moc_server_constraints.spatial_constraint = spatial_constraint
 
-    request_payload = MOCServerQuery.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
+    request_payload = mocserver.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
     assert request_payload['stc'] == poly_payload
 
 @pytest.mark.parametrize('intersect',
@@ -201,19 +195,13 @@ def test_intersect_param(intersect, init_request):
     circle_sky_region = CircleSkyRegion(center, radius)
 
     spatial_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect=intersect)
-    moc_server_constraints.set_spatial_constraint(spatial_constraint)
+    moc_server_constraints.spatial_constraint = spatial_constraint
 
-    request_payload = MOCServerQuery.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
+    request_payload = mocserver.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
 
     assert request_payload['intersect'] == intersect
-"""
-Properties Constraints requests
 
-We check for several properties expressions if the returned payloads are correct
-
-"""
-
-@pytest.mark.parametrize('get_attr, get_attr_str', [(Format.ID, 'id'),
+@pytest.mark.parametrize('get_attr, get_attr_str', [(Format.id, 'id'),
 (Format.record, 'record'),
 (Format.number, 'number'),
 (Format.moc, 'moc'),
@@ -221,7 +209,7 @@ We check for several properties expressions if the returned payloads are correct
 def test_get_attribute(get_attr, get_attr_str, init_request):
     """Test if the request parameter 'get' works for a basic cone search request"""
     moc_server_constraints, moc_server_format = init_request
-    moc_server_format = MOCServerResponseFormat(format=get_attr)
+    moc_server_format = OutputFormat(format=get_attr)
 
     # Simple cone search request
     center = coordinates.SkyCoord(ra=10.8, dec=6.5, unit="deg")
@@ -229,8 +217,8 @@ def test_get_attribute(get_attr, get_attr_str, init_request):
     circle_sky_region = CircleSkyRegion(center, radius)
 
     spatial_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect="overlaps")
-    moc_server_constraints.set_spatial_constraint(spatial_constraint)
+    moc_server_constraints.spatial_constraint = spatial_constraint
 
-    result = MOCServerQuery.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
+    result = mocserver.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
 
     assert result['get'] == get_attr_str
