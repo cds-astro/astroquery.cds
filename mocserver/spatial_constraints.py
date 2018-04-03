@@ -11,144 +11,148 @@ from regions import CircleSkyRegion
 from regions import PolygonSkyRegion
 from mocpy import MOC
 
+
 class SpatialConstraint(ABC):
-	"""
-	This abstract class provides an interface for spatial constraints
+    """
+    This abstract class provides an interface for spatial constraints
 
-	The user can define a spatial constraint when querying
-	the MOCServer. This class is an interface for different
-	possible spatial constraints. Those are defined below
-	such as CircleSkyRegionSpatialConstraint and
-	PolygonSkyRegionSpatialConstraint
-	"""
+    The user can define a spatial constraint when querying
+    the MOCServer. This class is an interface for different
+    possible spatial constraints. Those are defined below
+    such as CircleSkyRegionSpatialConstraint and
+    PolygonSkyRegionSpatialConstraint
+    """
 
-	@abstractmethod
-	def __init__(self, intersect):
-		"""
-		SpatialConstraint's constructor
+    @abstractmethod
+    def __init__(self, intersect):
+        """
+        SpatialConstraint's constructor
 
-		Parameters:
-		----
-		intersect : string
-			specify if the defined region must overlaps,
-			covers or encloses the mocs from each dataset
-			stored in the MOCServer
+        Parameters:
+        ----
+        intersect : string
+            specify if the defined region must overlaps,
+            covers or encloses the mocs from each dataset
+            stored in the MOCServer
 
-		Exceptions:
-		----
-		ValueError :
-			- intersect must have its value in (overlaps, enclosed, covers)
+        Exceptions:
+        ----
+        ValueError :
+            - intersect must have its value in (overlaps, enclosed, covers)
 
-		"""
+        """
+        if intersect not in ("overlaps", "enclosed", "covers"):
+            print("intersect parameters must have a value in ('overlaps', 'enclosed', 'covers')")
+            raise ValueError
 
-		if intersect not in ("overlaps", "enclosed", "covers"):
-			print("intersect parameters must have a value in ('overlaps', 'enclosed', 'covers')")
-			raise ValueError
+        self.request_payload = {'intersect': intersect}
 
-		self.request_payload = {'intersect' : intersect}
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        result = "Spatial constraint having request payload :\n{0}".format(self.request_payload)
+        return result
 
-	def __repr__(self):
-		str = "Spatial constraint having request payload :\n{0}".format(self.request_payload)
-		return str
 
 class CircleSkyRegionSpatialConstraint(SpatialConstraint):
-	"""
-	Class defining a circle sky region
+    """
+    Class defining a circle sky region
 
-	Inherits from SpatialConstraint class
-	and implements the cone search method
+    Inherits from SpatialConstraint class
+    and implements the cone search method
 
-	"""
+    """
+    def __init__(self, circle_region, intersect='overlaps'):
+        """
+        CircleSkyRegionSpatialConstraint's constructor
 
-	def __init__(self, circle_region, intersect='overlaps'):
-		"""
-		CircleSkyRegionSpatialConstraint's constructor
+        Parameters:
+        ----
+        circle_region : regions.CircleSkyRegion
+            defines a circle of center(ra, dec) and radius given
+            specifying the region in which one can ask for the datasets
+            intersecting it
 
-		Parameters:
-		----
-		circle_region : regions.CircleSkyRegion
-			defines a circle of center(ra, dec) and radius given
-			specifying the region in which one can ask for the datasets
-			intersecting it
+        Exceptions:
+        ----
+        TypeError:
+            - circleSkyRegion must be of type regions.CircleSkyRegion
 
-		Exceptions:
-		----
-		TypeError:
-			- circleSkyRegion must be of type regions.CircleSkyRegion
+        """
 
-		"""
+        if not isinstance(circle_region, CircleSkyRegion):
+            raise TypeError
 
-		if not isinstance(circle_region, CircleSkyRegion):
-			raise TypeError
+        super(CircleSkyRegionSpatialConstraint, self).__init__(intersect)
+        self.circle_region = circle_region
+        self.request_payload.update({
+            'DEC': circle_region.center.dec.to_string(decimal=True),
+            'RA': circle_region.center.ra.to_string(decimal=True),
+            'SR': str(circle_region.radius.value)
+        })
 
-		super(CircleSkyRegionSpatialConstraint, self).__init__(intersect)
-		self.circle_region = circle_region
-		self.request_payload.update({
-            'DEC' : circle_region.center.dec.to_string(decimal=True),
-            'RA' : circle_region.center.ra.to_string(decimal=True),
-            'SR' : str(circle_region.radius.value)
-		})
 
 class PolygonSkyRegionSpatialConstraint(SpatialConstraint):
     """
-	Class defining a spatial polygon region
+    Class defining a spatial polygon region
 
-	Inherits from SpatialConstraint class
-	and gives the user the possibility to defines
-	a polygon as the region of interest for finding
-	all the datasets intersecting it
+    Inherits from SpatialConstraint class
+    and gives the user the possibility to defines
+    a polygon as the region of interest for finding
+    all the datasets intersecting it
 
-	"""
+    """
 
     def __init__(self, polygon_region, intersect='overlaps'):
         """
-		PolygonSkyRegionSpatialConstraint's constructor
+        PolygonSkyRegionSpatialConstraint's constructor
 
-		Parameters:
-		----
-		polygon_region : regions.PolygonSkyRegion
-			defines a Polygon expressed as a list of vertices
-			of type regions.SkyCoord
+        Parameters:
+        ----
+        polygon_region : regions.PolygonSkyRegion
+            defines a Polygon expressed as a list of vertices
+            of type regions.SkyCoord
 
-		Exceptions:
-		----
-		TypeError :
-			- polygonSkyRegion must be of type regions.PolygonSkyRegion
+        Exceptions:
+        ----
+        TypeError :
+            - polygonSkyRegion must be of type regions.PolygonSkyRegion
 
-		AttributeError :
-			- the SkyCoord referring to the vertices of the polygon
-			needs to have at least 3 vertices otherwise it is
-			not a polygon but a line or a single vertex
+        AttributeError :
+            - the SkyCoord referring to the vertices of the polygon
+            needs to have at least 3 vertices otherwise it is
+            not a polygon but a line or a single vertex
 
-		"""
+        """
 
         if not isinstance(polygon_region, PolygonSkyRegion):
             raise TypeError
 
         super(PolygonSkyRegionSpatialConstraint, self).__init__(intersect)
 
-        #test if the polygon has at least 3 vertices
+        # test if the polygon has at least 3 vertices
         if len(polygon_region.vertices.ra) < 3:
             print("A polygon must have at least 3 vertices")
             raise AttributeError
 
-        self.request_payload.update({'stc' : self._to_stc(polygon_region)})
+        self.request_payload.update({'stc' : self.__to_stc(polygon_region)})
 
-    def _to_stc(self, polygon_region):
+    @staticmethod
+    def __to_stc(polygon_region):
         """
-		Convert a regions.PolygonSkyRegion instance to a string
+        Convert a regions.PolygonSkyRegion instance to a string
 
-		MOCServer requests for a polygon expressed in a STC format
-		i.e. a string beginning with 'Polygon' and iterating through
-		all the vertices' ra and dec
+        MOCServer requests for a polygon expressed in a STC format
+        i.e. a string beginning with 'Polygon' and iterating through
+        all the vertices' ra and dec
 
-		"""
+        """
+
         polygon_stc = "Polygon"
         for i in range(len(polygon_region.vertices.ra)):
-            polygon_stc += " " + polygon_region.vertices.ra[i].to_string(decimal=True) + \
-            " " + polygon_region.vertices.dec[i].to_string(decimal=True)
+            polygon_stc += ' ' + polygon_region.vertices.ra[i].to_string(decimal=True) + \
+                           ' ' + polygon_region.vertices.dec[i].to_string(decimal=True)
 
         return polygon_stc
+
 
 class MocSpatialConstraint(SpatialConstraint):
     def __init__(self, intersect='overlaps'):
@@ -161,7 +165,7 @@ class MocSpatialConstraint(SpatialConstraint):
         if not isinstance(filename, str):
             raise TypeError
         moc_constraint = cls(intersect=intersect)
-        moc_constraint.request_payload.update({'moc' : filename})
+        moc_constraint.request_payload.update({'moc': filename})
         return moc_constraint
 
     @classmethod
@@ -169,12 +173,12 @@ class MocSpatialConstraint(SpatialConstraint):
         if not isinstance(url, str):
             raise TypeError
         moc_constraint = cls(intersect=intersect)
-        moc_constraint.request_payload.update({'url' : url})
+        moc_constraint.request_payload.update({'url': url})
         return moc_constraint
 
     @classmethod
     def from_mocpy_object(cls, mocpy_obj, intersect='overlaps'):
-        if not isinstance(data, MOC):
+        if not isinstance(mocpy_obj, MOC):
             raise TypeError
 
         mocpy_obj.write('tmp_moc.json', format='json')
@@ -184,5 +188,5 @@ class MocSpatialConstraint(SpatialConstraint):
 
         remove('tmp_moc.json')
         moc_constraint = cls(intersect=intersect)
-        moc_constraint.request_payload.update({'moc' : content})
+        moc_constraint.request_payload.update({'moc': content})
         return moc_constraint

@@ -7,6 +7,7 @@ from __future__ import print_function
 from abc import abstractmethod, ABC
 from enum import Enum
 
+
 class PropertyConstraint(object):
     """
     PropertyConstraint's class definition
@@ -22,38 +23,42 @@ class PropertyConstraint(object):
     """
 
     def __init__(self, expression):
-        """PropertiesConstraint's constructor
+        """
+        PropertiesConstraint's constructor
 
-		Parameters:
-		----
-			propertiesExpr : PropertiesExpr
-                the property expr
+        Parameters:
+            expression : PropertiesExpr
+            the property expr
+
         Exceptions:
-        ----
             TypeError :
                 the expression passed by args to the constructor
                 must be of type PropertiesExpr
-		"""
+
+        """
 
         if not isinstance(expression, PropertiesExpr):
             raise TypeError
 
         self.expr = expression
+        self.request_payload = dict()
         self.compute_payload()
 
     def compute_payload(self):
         """Update the property constraints payload"""
-        self.request_payload = {'expr' : self.expr.eval()}
+        self.request_payload = {'expr': self.expr.eval()}
 
     def __repr__(self):
-        str = "Properties constraints' request payload :\n{0}".format(self.request_payload)
-        return str
+        result = "Properties constraints' request payload :\n{0}".format(self.request_payload)
+        return result
+
 
 class OperandExpr(Enum):
     """Operand Enum which allow the user to define relationship between expr"""
     Inter = 1,
     Union = 2,
     Subtr = 3
+
 
 class PropertiesExpr(ABC):
     """
@@ -76,6 +81,7 @@ class PropertiesExpr(ABC):
 
         pass
 
+
 class ChildNode(PropertiesExpr):
     """Leaf expression node of the binary tree expression"""
 
@@ -85,6 +91,7 @@ class ChildNode(PropertiesExpr):
 
     def eval(self):
         return str(self.condition)
+
 
 class ParentNode(PropertiesExpr):
     """Parent expression node of the binary tree expression"""
@@ -101,8 +108,8 @@ class ParentNode(PropertiesExpr):
         self.operand = operand
 
     def eval(self):
-        left_expr_str = self.left_expr.eval()
-        right_expr_str = self.right_expr.eval()
+        left_expr_str = str(self.left_expr.eval())
+        right_expr_str = str(self.right_expr.eval())
 
         operand_str = " &! "
         if self.operand is OperandExpr.Inter:

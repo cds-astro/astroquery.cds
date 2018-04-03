@@ -4,36 +4,38 @@ import os
 import json
 from sys import getsizeof
 
-from mocserver.core import mocserver
+from ..core import mocserver, MocserverClass
 
-from mocserver.constraints import Constraints
-from mocserver.spatial_constraints import *
-from mocserver.property_constraint import *
-from mocserver.output_format import *
+from ..constraints import Constraints
+from ..spatial_constraints import *
+from ..property_constraint import *
+from ..output_format import *
 
 from astroquery.utils.testing_tools import MockResponse
-from astroquery.utils import commons
 
 from astropy import coordinates
 from regions import CircleSkyRegion, PolygonSkyRegion
 
 DATA_FILES = {
-	'CONE_SEARCH' : 'cone_search.json',
-	'POLYGON_SEARCH' : 'polygon_search.json',
-	'PROPERTIES_SEARCH' : 'properties.json',
-	'HIPS_FROM_SAADA_AND_ALASKY' : 'hips_from_saada_alasky.json',
-	'HIPS_GAIA' : 'hips_gaia.json'
+    'CONE_SEARCH': 'cone_search.json',
+    'POLYGON_SEARCH': 'polygon_search.json',
+    'PROPERTIES_SEARCH': 'properties.json',
+    'HIPS_FROM_SAADA_AND_ALASKY': 'hips_from_saada_alasky.json',
+    'HIPS_GAIA': 'hips_gaia.json'
 }
+
 
 def data_path(filename):
     data_dir = os.path.join(os.path.dirname(__file__), 'data')
     return os.path.join(data_dir, filename)
 
+
 @pytest.fixture
 def init_request():
     moc_server_constraints = Constraints()
     moc_server_format = OutputFormat()
-    return (moc_server_constraints, moc_server_format)
+    return moc_server_constraints, moc_server_format
+
 
 @pytest.fixture
 def patch_get(request):
@@ -41,13 +43,15 @@ def patch_get(request):
         mp = request.getfixturevalue("monkeypatch")
     except AttributeError:  # pytest < 3
         mp = request.getfuncargvalue("monkeypatch")
-    mp.setattr(MOCServerQuery, '_request', get_mockreturn)
+    mp.setattr(MocserverClass, '_request', get_mockreturn)
     return mp
+
 
 def get_mockreturn(method, url, params=None, timeout=10, **kwargs):
     filename = data_path(DATA_FILES[params['get']])
     content = open(filename, 'rb').read()
     return MockResponse(content)
+
 
 @pytest.fixture
 def get_request_results(init_request):
@@ -63,6 +67,7 @@ def get_request_results(init_request):
         request_result = mocserver.query_region(moc_server_constraints, moc_server_format)
         return request_result
     return process_query
+
 
 @pytest.fixture
 def get_true_request_results():
@@ -82,6 +87,7 @@ def get_true_request_results():
         return json.loads(content)
 
     return load_true_result_query
+
 
 """List of all the constraint we want to test"""
 # SPATIAL CONSTRAINTS DEFINITIONS
@@ -129,14 +135,14 @@ with regards to the true results stored in a file located in the data directory
 
 """
 
+
 @pytest.mark.parametrize('spatial_constraint, property_constraint, data_file_id',
     [(cone_search_constraint, None, 'CONE_SEARCH'),
     (polygon_search_constraint, None, 'POLYGON_SEARCH'),
     (None, properties_ex, 'PROPERTIES_SEARCH'),
     (None, properties_hips_from_saada_alasky, 'HIPS_FROM_SAADA_AND_ALASKY'),
     (None, properties_hips_gaia, 'HIPS_GAIA')])
-def test_request_results(spatial_constraint, property_constraint, data_file_id, \
-get_true_request_results, get_request_results):
+def test_request_results(spatial_constraint, property_constraint, data_file_id, get_true_request_results, get_request_results):
     """
     Compare the request result obtained with the astroquery.Mocserver API
 
@@ -157,6 +163,7 @@ request param 'intersect' is correct
 
 """
 
+
 @pytest.mark.parametrize('RA, DEC, RADIUS',
     [(10.8, 6.5, 0.5),
     (25.6, -23.2, 1.1),
@@ -175,6 +182,7 @@ def test_cone_search_spatial_request(RA, DEC, RADIUS, init_request):
     request_payload['RA'] == str(RA) and \
     request_payload['SR'] == str(RADIUS)
 
+
 @pytest.mark.parametrize('poly, poly_payload',
 [(polygon1, 'Polygon 57.376 24.053 56.391 24.622 56.025 24.049 56.616 24.291'),
 (polygon2, 'Polygon 58.376 24.053 53.391 25.622 56.025 22.049 54.616 27.291')])
@@ -185,6 +193,7 @@ def test_polygon_spatial_request(poly, poly_payload, init_request):
 
     request_payload = mocserver.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
     assert request_payload['stc'] == poly_payload
+
 
 @pytest.mark.parametrize('intersect',
 ['enclosed', 'overlaps', 'covers'])
@@ -201,11 +210,12 @@ def test_intersect_param(intersect, init_request):
 
     assert request_payload['intersect'] == intersect
 
+
 @pytest.mark.parametrize('get_attr, get_attr_str', [(Format.id, 'id'),
-(Format.record, 'record'),
-(Format.number, 'number'),
-(Format.moc, 'moc'),
-(Format.imoc, 'imoc')])
+                                                    (Format.record, 'record'),
+                                                    (Format.number, 'number'),
+                                                    (Format.moc, 'moc'),
+                                                    (Format.i_moc, 'imoc')])
 def test_get_attribute(get_attr, get_attr_str, init_request):
     """Test if the request parameter 'get' works for a basic cone search request"""
     moc_server_constraints, moc_server_format = init_request

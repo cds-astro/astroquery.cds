@@ -3,8 +3,9 @@
 
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from mocserver.spatial_constraints import SpatialConstraint
-from mocserver.property_constraint import PropertyConstraint
+from .spatial_constraints import SpatialConstraint
+from .property_constraint import PropertyConstraint
+
 
 class Constraints(object):
     def __init__(self, sc=None, pc=None):
@@ -14,7 +15,7 @@ class Constraints(object):
         self.spatial_constraint = sc
         self.properties_constraint = pc
 
-    # Ensure the payload cannot be setted
+    # Ensure the payload cannot be set
     @property
     def payload(self):
         return self.__payload
@@ -37,7 +38,7 @@ class Constraints(object):
     def properties_constraint(self):
         return self.__properties_constraint
 
-    @spatial_constraint.setter
+    @properties_constraint.setter
     def properties_constraint(self, sp):
         if sp and not isinstance(sp, PropertyConstraint):
             raise TypeError

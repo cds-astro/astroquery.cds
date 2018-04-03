@@ -2,18 +2,11 @@
 # -*- coding: utf-8 -*
 
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from __future__ import print_function
 
 # put all imports organized as shown below
 # 1. standard library imports
 
 # 2. third party imports
-import astropy.units as u
-import astropy.coordinates as coord
-import astropy.io.votable as votable
-from astropy.table import Table
-from astropy.io import fits
-from regions import CircleSkyRegion
 from pprint import pprint
 
 # 3. local imports - use relative imports
@@ -32,15 +25,14 @@ from .output_format import OutputFormat
 
 # export all the public classes and methods
 __all__ = ['mocserver', 'MocserverClass']
-
 # declare global variables and constants if any
-
 
 # Now begin your main class
 # should be decorated with the async_to_sync imported previously
+
+
 @async_to_sync
 class MocserverClass(BaseQuery):
-
     """
     Not all the methods below are necessary but these cover most of the common
     cases, new methods may be added if necessary, follow the guidelines at
@@ -65,65 +57,6 @@ class MocserverClass(BaseQuery):
     return result
     """
 
-    def query_object_async(self, object_name, get_query_payload=False,
-        cache=True):
-        """
-        This method is for services that can parse object names. Otherwise
-        use :meth:`astroquery.template_module.TemplateClass.query_region`.
-        Put a brief description of what the class does here.
-
-        Parameters
-        ----------
-        object_name : str
-            name of the identifier to query.
-        get_query_payload : bool, optional
-            This should default to False. When set to `True` the method
-            should return the HTTP request parameters as a dict.
-
-        Returns
-        -------
-        response : `requests.Response`
-            The HTTP response returned from the service.
-            All async methods should return the raw HTTP response.
-
-        Examples
-        --------
-        While this section is optional you may put in some examples that
-        show how to use the method. The examples are written similar to
-        standard doctests in python.
-            """
-    # the async method should typically have the following steps:
-    # 1. First construct the dictionary of the HTTP request params.
-    # 2. If get_query_payload is `True` then simply return this dict.
-    # 3. Else make the actual HTTP request and return the corresponding
-    #    HTTP response
-    # All HTTP requests are made via the `BaseQuery._request` method. This
-    # use a generic HTTP request method internally, similar to
-    # `requests.Session.request` of the Python Requests library, but
-    # with added caching-related tools.
-
-	# See below for an example:
-
-	# first initialize the dictionary of HTTP request parameters
-        request_payload = dict()
-
-	# Now fill up the dictionary. Here the dictionary key should match
-	# the exact parameter name as expected by the remote server. The
-	# corresponding dict value should also be in the same format as
-	# expected by the server. Additional parsing of the user passed
-	# value may be required to get it in the right units or format.
-	# All this parsing may be done in a separate private `_args_to_payload`
-	# method for cleaner code.
-
-	# similarly fill up the rest of the dict ...
-        if get_query_payload:
-            return request_payload
-	# BaseQuery classes come with a _request method that includes a
-	# built-in caching system
-        response = self._request('GET', self.URL, params=request_payload, timeout=self.TIMEOUT)
-
-        return response
-
     # For services that can query coordinates, use the query_region method.
     # The pattern is similar to the query_object method. The query_region
     # method also has a 'radius' keyword for specifying the radius around
@@ -139,7 +72,7 @@ class MocserverClass(BaseQuery):
         if get_query_payload:
             return response
 
-        #TODO MOCServerResponse
+        # TODO MOCServerResponse
         print(response)
         result = self._parse_result_region(response)
         return result
@@ -150,16 +83,15 @@ class MocserverClass(BaseQuery):
 
         Parameters
         ----------
-        coordinates : str or `astropy.coordinates`.
-            coordinates around which to query
-        radius : str or `astropy.units.Quantity`.
-            the radius of the cone search
-        intersect : determines if the region must overlap (default),
-            enclosed, or cover the matching collection coverages
+        constraints : Constraints
+            Contains all the spatial and properties constraints for the query
+        output_format : OutputFormat
+            Contains the format of return. By default the request will return python compatible
+            objects such as lists and dicts describing the dataset found with respect to the constraints
+            mentioned before
         get_query_payload : bool, optional
             Just return the dict of HTTP request parameters.
-        verbose : bool, optional
-            Display VOTable warnings or not.
+        cache : bool
 
         Returns
         -------
@@ -167,18 +99,18 @@ class MocserverClass(BaseQuery):
         The HTTP response returned from the service.
         All async methods should return the raw HTTP response.
         """
-        request_payload = {}
+        request_payload = dict()
         if not isinstance(constraints, Constraints):
             print("Invalid constraints. Must be of MOCServerConstraints type")
             raise TypeError
         else:
-            request_payload = constraints.payload
+            request_payload.update(constraints.payload)
 
         if not isinstance(output_format, OutputFormat):
             print("Invalid response format. Must be of MOCServerResponseFormat type")
             raise TypeError
         else:
-            request_payload.update(output_format.get_request_payload())
+            request_payload.update(output_format.request_payload)
 
         if get_query_payload:
             return request_payload
@@ -196,12 +128,13 @@ class MocserverClass(BaseQuery):
 
         return response
 
-    def _parse_result_region(self, response, verbose=False):
+    @staticmethod
+    def _parse_result_region(response, verbose=False):
         # if verbose is False then suppress any VOTable related warnings
         if not verbose:
             commons.suppress_vo_warnings()
-	# try to parse the result into an astropy.Table, else
-	# return the raw result with an informative error message.
+    # try to parse the result into an astropy.Table, else
+    # return the raw result with an informative error message.
         return response.json()
 
     # the methods above call the private _parse_result method.
@@ -210,46 +143,47 @@ class MocserverClass(BaseQuery):
 
     """
     def _parse_result(self, response, get, verbose=False):
-	# if verbose is False then suppress any VOTable related warnings
-	if not verbose:
-	    commons.suppress_vo_warnings()
-	# try to parse the result into an astropy.Table, else
-	# return the raw result with an informative error message.
-	results = response.json()
-	res = None
-	try:
-	    # do something with regex to get the result into
-	    # astropy.Table form. return the Table.
-	    if get == 'ID':
-		res = Table([results], names=('a'))
-	    elif get == 'number':
-		res = int(results["number"])
-	    elif get == 'record':
-		properties_all_s = set()
-		for record_d in results:
-		    properties_all_s = properties_all_s | set(record_d.keys())
-		ordered_columns_t = tuple(sorted(properties_all_s))
-		rows_l = [] 
-		for record_d in results:
-		    full_record_d = {propertie: None for propertie in properties_all_s}
-		    for key, value in record_d.items():
-			full_record_d.update({key : str(value)})
+    # if verbose is False then suppress any VOTable related warnings
+    if not verbose:
+        commons.suppress_vo_warnings()
+    # try to parse the result into an astropy.Table, else
+    # return the raw result with an informative error message.
+    results = response.json()
+    res = None
+    try:
+        # do something with regex to get the result into
+        # astropy.Table form. return the Table.
+        if get == 'ID':
+        res = Table([results], names=('a'))
+        elif get == 'number':
+        res = int(results["number"])
+        elif get == 'record':
+        properties_all_s = set()
+        for record_d in results:
+            properties_all_s = properties_all_s | set(record_d.keys())
+        ordered_columns_t = tuple(sorted(properties_all_s))
+        rows_l = [] 
+        for record_d in results:
+            full_record_d = {propertie: None for propertie in properties_all_s}
+            for key, value in record_d.items():
+            full_record_d.update({key : str(value)})
 
-		    row_l = []
-		    for k in ordered_columns_t:
-			row_l.append(full_record_d[k])
-		    rows_l.append(tuple(row_l))
-		#import pprint; pprint.pprint(rows_l)
-		res = Table(rows=rows_l, names=ordered_columns_t)
-	    elif get == 'moc' or get == 'imoc':
-		res = results;
+            row_l = []
+            for k in ordered_columns_t:
+            row_l.append(full_record_d[k])
+            rows_l.append(tuple(row_l))
+        #import pprint; pprint.pprint(rows_l)
+        res = Table(rows=rows_l, names=ordered_columns_t)
+        elif get == 'moc' or get == 'imoc':
+        res = results;
 
-	except ValueError:
-	    # catch common errors here, but never use bare excepts
-	    # return raw result/ handle in some way
-	    pass
-	return res
+    except ValueError:
+        # catch common errors here, but never use bare excepts
+        # return raw result/ handle in some way
+        pass
+    return res
     """
+
 
 # the default tool for users to interact with is an instance of the Class
 mocserver = MocserverClass()

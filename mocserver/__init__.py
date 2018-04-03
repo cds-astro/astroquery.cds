@@ -12,6 +12,7 @@ MocServer
 # Below is a common use case
 from astropy import config as _config
 
+
 class Conf(_config.ConfigNamespace):
     """
     Configuration parameters for `astroquery.template_module`.

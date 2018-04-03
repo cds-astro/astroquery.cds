@@ -45,7 +45,6 @@ if __name__ == '__main__':
     # A moc server constraints object contains one spatial and/or one properties constraint
     moc_server_constraints = Constraints()
     moc_server_constraints.spatial_constraint = spatial_constraint
-    #moc_server_constraints.set_properties_constraint(properties_constraint)
 
     # A query to the MOCServer accepts a : 
     # - MOCServerConstraints object defining all the spatial and properties constraints on the query
