@@ -74,7 +74,7 @@ class MocserverClass(BaseQuery):
 
         # TODO MOCServerResponse
         print(response)
-        result = self._parse_result_region(response)
+        result = MocserverClass.__parse_result_region(response, output_format)
         return result
 
     def query_region_async(self, constraints, output_format, get_query_payload, cache=True):
@@ -129,13 +129,29 @@ class MocserverClass(BaseQuery):
         return response
 
     @staticmethod
-    def _parse_result_region(response, verbose=False):
+    def __parse_to_float(value):
+        try:
+            return float(value)
+        except Exception:
+            return value
+
+    @staticmethod
+    def __parse_result_region(response, output_format, verbose=False):
         # if verbose is False then suppress any VOTable related warnings
         if not verbose:
             commons.suppress_vo_warnings()
-    # try to parse the result into an astropy.Table, else
-    # return the raw result with an informative error message.
-        return response.json()
+        # try to parse the result into an astropy.Table, else
+        # return the raw result with an informative error message.
+        r = response.json()
+        parsed_r = None
+        if isinstance(r, list) and output_format.format is OutputFormat.Type.record:
+            parsed_r = [dict([k, MocserverClass.__parse_to_float(v)] for k, v in di.items()) for di in r]
+        elif isinstance(r, dict):
+            parsed_r = dict([k, MocserverClass.__parse_to_float(v)] for k, v in r.items())
+        else:
+            parsed_r = r
+
+        return parsed_r
 
     # the methods above call the private _parse_result method.
     # This should parse the raw HTTP response and return it as
