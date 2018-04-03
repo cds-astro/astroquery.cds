@@ -2,25 +2,24 @@
 # -*- coding: utf-8 -*
 
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from __future__ import print_function
-
 from enum import Enum
 from sys import maxsize
 
 
-class Format(Enum):
-    id = 1,
-    record = 2,
-    number = 3,
-    moc = 4,
-    i_moc = 5
-
-
 class OutputFormat(object):
-    def __init__(self, format=Format.id, field_l=[], moc_order=maxsize, case_sensitive=True, max_rec=None):
-        if not isinstance(format, Format):
+    class Type(Enum):
+        id = 1,
+        record = 2,
+        number = 3,
+        moc = 4,
+        i_moc = 5
+
+    def __init__(self, format=Type.id, field_l=[], moc_order=maxsize, case_sensitive=True, max_rec=None):
+        if not isinstance(format, OutputFormat.Type):
             print("The response format must have value in the ResponseFormat enum")
             raise TypeError
+
+        self.format = format
 
         if not isinstance(field_l, list) or not isinstance(case_sensitive, bool):
             raise TypeError
@@ -33,9 +32,9 @@ class OutputFormat(object):
         if max_rec and not isinstance(max_rec, int):
             raise TypeError
 
-        if format is Format.id:
+        if format is OutputFormat.Type.id:
             self.request_payload.update({'get': 'id'})
-        elif format is Format.record:
+        elif format is OutputFormat.Type.record:
             self.request_payload.update({'get': 'record'})
 
         # parse fields
@@ -50,9 +49,9 @@ class OutputFormat(object):
                 self.request_payload.update({
                     "fields": fields_str
                 })
-        elif format is Format.number:
+        elif format is OutputFormat.Type.number:
             self.request_payload.update({'get': 'number'})
-        elif format in (Format.moc, Format.i_moc):
+        elif format in (OutputFormat.Type.moc, OutputFormat.Type.i_moc):
             if moc_order != maxsize:
                 self.request_payload.update({
                     "order": moc_order
@@ -62,13 +61,10 @@ class OutputFormat(object):
                     "order": "max"
                 })
 
-            if format is Format.i_moc:
+            if format is OutputFormat.Type.i_moc:
                 self.request_payload.update({'get': 'imoc'})
             else:
                 self.request_payload.update({'get': 'moc'})
 
         if max_rec:
             self.request_payload.update({'MAXREC': str(max_rec)})
-
-    def get_request_payload(self):
-        return self.request_payload

@@ -52,7 +52,7 @@ class SpatialConstraint(ABC):
         return result
 
 
-class CircleSkyRegionSpatialConstraint(SpatialConstraint):
+class Cone(SpatialConstraint):
     """
     Class defining a circle sky region
 
@@ -60,6 +60,7 @@ class CircleSkyRegionSpatialConstraint(SpatialConstraint):
     and implements the cone search method
 
     """
+
     def __init__(self, circle_region, intersect='overlaps'):
         """
         CircleSkyRegionSpatialConstraint's constructor
@@ -81,7 +82,7 @@ class CircleSkyRegionSpatialConstraint(SpatialConstraint):
         if not isinstance(circle_region, CircleSkyRegion):
             raise TypeError
 
-        super(CircleSkyRegionSpatialConstraint, self).__init__(intersect)
+        super(Cone, self).__init__(intersect)
         self.circle_region = circle_region
         self.request_payload.update({
             'DEC': circle_region.center.dec.to_string(decimal=True),
@@ -90,7 +91,7 @@ class CircleSkyRegionSpatialConstraint(SpatialConstraint):
         })
 
 
-class PolygonSkyRegionSpatialConstraint(SpatialConstraint):
+class Polygon(SpatialConstraint):
     """
     Class defining a spatial polygon region
 
@@ -126,7 +127,7 @@ class PolygonSkyRegionSpatialConstraint(SpatialConstraint):
         if not isinstance(polygon_region, PolygonSkyRegion):
             raise TypeError
 
-        super(PolygonSkyRegionSpatialConstraint, self).__init__(intersect)
+        super(Polygon, self).__init__(intersect)
 
         # test if the polygon has at least 3 vertices
         if len(polygon_region.vertices.ra) < 3:
@@ -154,11 +155,11 @@ class PolygonSkyRegionSpatialConstraint(SpatialConstraint):
         return polygon_stc
 
 
-class MocSpatialConstraint(SpatialConstraint):
+class Moc(SpatialConstraint):
     def __init__(self, intersect='overlaps'):
         """Contruct a constraint based on the surface covered by a moc"""
         self.request_payload = {}
-        super(MocSpatialConstraint, self).__init__(intersect)
+        super(Moc, self).__init__(intersect)
 
     @classmethod
     def from_file(cls, filename, intersect='overlaps'):

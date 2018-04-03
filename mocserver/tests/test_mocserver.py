@@ -94,11 +94,11 @@ def get_true_request_results():
 center = coordinates.SkyCoord(ra=10.8, dec=6.5, unit="deg")
 radius = coordinates.Angle(1.5, unit="deg")
 circle_sky_region = CircleSkyRegion(center, radius)
-cone_search_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect='overlaps')
+cone_search_constraint = Cone(circle_sky_region, intersect='overlaps')
 
 polygon1 = PolygonSkyRegion(vertices=coordinates.SkyCoord([57.376, 56.391, 56.025, 56.616], [24.053, 24.622, 24.049, 24.291], frame="icrs", unit="deg"))
 polygon2 = PolygonSkyRegion(vertices=coordinates.SkyCoord([58.376, 53.391, 56.025, 54.616], [24.053, 25.622, 22.049, 27.291], frame="icrs", unit="deg"))
-polygon_search_constraint = PolygonSkyRegionSpatialConstraint(polygon1, intersect='overlaps')
+polygon_search_constraint = Polygon(polygon1, intersect='overlaps')
 
 # PROPERTY CONSTRAINTS DEFINITIONS
 properties_ex = PropertyConstraint(ParentNode(
@@ -174,7 +174,7 @@ def test_cone_search_spatial_request(RA, DEC, RADIUS, init_request):
     radius = coordinates.Angle(RADIUS, unit="deg")
     circle_sky_region = CircleSkyRegion(center, radius)
 
-    spatial_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect="overlaps")
+    spatial_constraint = Cone(circle_sky_region, intersect="overlaps")
     moc_server_constraints.spatial_constraint = spatial_constraint
 
     request_payload = mocserver.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
@@ -188,7 +188,7 @@ def test_cone_search_spatial_request(RA, DEC, RADIUS, init_request):
 (polygon2, 'Polygon 58.376 24.053 53.391 25.622 56.025 22.049 54.616 27.291')])
 def test_polygon_spatial_request(poly, poly_payload, init_request):
     moc_server_constraints, moc_server_format = init_request
-    spatial_constraint = PolygonSkyRegionSpatialConstraint(poly, intersect="overlaps")
+    spatial_constraint = Polygon(poly, intersect="overlaps")
     moc_server_constraints.spatial_constraint = spatial_constraint
 
     request_payload = mocserver.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
@@ -203,7 +203,7 @@ def test_intersect_param(intersect, init_request):
     radius = coordinates.Angle(1.5, unit="deg")
     circle_sky_region = CircleSkyRegion(center, radius)
 
-    spatial_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect=intersect)
+    spatial_constraint = Cone(circle_sky_region, intersect=intersect)
     moc_server_constraints.spatial_constraint = spatial_constraint
 
     request_payload = mocserver.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
@@ -211,11 +211,11 @@ def test_intersect_param(intersect, init_request):
     assert request_payload['intersect'] == intersect
 
 
-@pytest.mark.parametrize('get_attr, get_attr_str', [(Format.id, 'id'),
-                                                    (Format.record, 'record'),
-                                                    (Format.number, 'number'),
-                                                    (Format.moc, 'moc'),
-                                                    (Format.i_moc, 'imoc')])
+@pytest.mark.parametrize('get_attr, get_attr_str', [(OutputFormat.Type.id, 'id'),
+                                                    (OutputFormat.Type.record, 'record'),
+                                                    (OutputFormat.Type.number, 'number'),
+                                                    (OutputFormat.Type.moc, 'moc'),
+                                                    (OutputFormat.Type.i_moc, 'imoc')])
 def test_get_attribute(get_attr, get_attr_str, init_request):
     """Test if the request parameter 'get' works for a basic cone search request"""
     moc_server_constraints, moc_server_format = init_request
@@ -226,7 +226,7 @@ def test_get_attribute(get_attr, get_attr_str, init_request):
     radius = coordinates.Angle(1.5, unit="deg")
     circle_sky_region = CircleSkyRegion(center, radius)
 
-    spatial_constraint = CircleSkyRegionSpatialConstraint(circle_sky_region, intersect="overlaps")
+    spatial_constraint = Cone(circle_sky_region, intersect="overlaps")
     moc_server_constraints.spatial_constraint = spatial_constraint
 
     result = mocserver.query_region(moc_server_constraints, moc_server_format, get_query_payload=True)
