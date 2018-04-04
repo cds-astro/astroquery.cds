@@ -117,6 +117,7 @@ class MocserverClass(BaseQuery):
 
         print('Final Request payload before requesting to alasky')
         pprint(request_payload)
+
         if 'moc' in request_payload:
             filename = request_payload['moc']
             with open(filename, 'rb') as f:
@@ -142,6 +143,7 @@ class MocserverClass(BaseQuery):
             commons.suppress_vo_warnings()
         # try to parse the result into an astropy.Table, else
         # return the raw result with an informative error message.
+
         r = response.json()
         parsed_r = None
         if isinstance(r, list) and output_format.format is OutputFormat.Type.record:

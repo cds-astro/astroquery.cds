@@ -41,13 +41,23 @@ class SpatialConstraint(ABC):
             - intersect must have its value in (overlaps, enclosed, covers)
 
         """
-        if intersect not in ("overlaps", "enclosed", "covers"):
+        self.__intersect = intersect
+        self.request_payload = {'intersect': self.__intersect}
+
+    @property
+    def intersect(self):
+        return self.__intersect
+
+    @intersect.setter
+    def intersect(self, value):
+        if value not in ('overlaps', 'enclosed', 'covers'):
             print("intersect parameters must have a value in ('overlaps', 'enclosed', 'covers')")
             raise ValueError
+        self.__intersect = value
+        self.request_payload.update({'intersect': self.__intersect})
 
-        self.request_payload = {'intersect': intersect}
-
-    def __repr__(self, *args, **kwargs): # real signature unknown
+    # real signature unknown
+    def __repr__(self, *args, **kwargs):
         result = "Spatial constraint having request payload :\n{0}".format(self.request_payload)
         return result
 
