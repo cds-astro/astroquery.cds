@@ -8,7 +8,9 @@ from mocserver.spatial_constraints import *
 from mocserver.constraints import Constraints
 
 from mocserver.property_constraint import *
+
 from mocserver.output_format import *
+from mocserver.dataset import Dataset
 
 import pprint
 
@@ -23,7 +25,8 @@ if __name__ == '__main__':
     polygon_sky_region = PolygonSkyRegion(vertices=coordinates.SkyCoord([57.376, 56.391, 56.025, 56.616], [24.053, 24.622, 24.049, 24.290], frame="icrs", unit="deg"))
     # spatial_constraint = PolygonSkyRegionSpatialConstraint(polygon_sky_region, "overlaps")
 
-    spatial_constraint = Moc.from_file(filename='mocserver/tests/data/moc.fits', intersect='overlaps')
+    spatial_constraint = Cone(circle_sky_region, intersect='overlaps')
+    # spatial_constraint = Moc.from_file(filename='mocserver/tests/data/moc.fits', intersect='overlaps')
     # spatial_constraint = MocSpatialConstraint.from_url(url='http://alasky.u-strasbg.fr/SDSS/DR9/color/Moc.fits', intersect='overlaps')
     # Properties constraint definition
     # An expression is defined as a tree-like data structure
@@ -48,11 +51,16 @@ if __name__ == '__main__':
     # A query to the MOCServer accepts a : 
     # - MOCServerConstraints object defining all the spatial and properties constraints on the query
     # - MOCServerResponseFormat object defining the response format of the query
-    response = mocserver.query_region(moc_server_constraints,
-                                           OutputFormat(format=OutputFormat.Type.id,
-                                                                   moc_order=14,
-                                                                   field_l=['ID', 'moc_sky_fraction']))
-    pprint.pprint(response)
+    datasets = mocserver.query_region(moc_server_constraints,
+                                      OutputFormat(format=OutputFormat.Type.record))
+    for id, dataset in datasets.items():
+        print(dataset.properties['dataproduct_type'])
+        if 'TAP' in dataset.services:
+            print(id)
+
+            print(dataset.search(Dataset.ServiceType.TAP, query="""SELECT * FROM basic JOIN ident ON oidref = oid
+WHERE id ='m13'"""))
+
 
     skycoord_list = [coordinates.SkyCoord(ra=57, dec=35, unit="deg"), coordinates.SkyCoord(ra=42, dec=34, unit="deg")]
     moc = MOC.from_coo_list(skycoord_list=skycoord_list, max_norder=5)
