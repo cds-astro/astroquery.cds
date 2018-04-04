@@ -279,13 +279,13 @@ def test_field_l_param(field_l, cone_spatial_constraint):
     moc_server_constraints = Constraints(sc=cone_spatial_constraint)
     output_format = OutputFormat(format=OutputFormat.Type.record, field_l=field_l)
 
-    result = mocserver.query_region(moc_server_constraints, output_format)
-    import pprint; pprint.pprint(result[0])
-    assert isinstance(result, list)
-    for dataset in result:
+    datasets = mocserver.query_region(moc_server_constraints, output_format)
+
+    assert isinstance(datasets, dict)
+    for id, dataset in datasets.items():
         at_least_one_field = False
         for field in field_l:
-            if field in dataset.keys():
+            if field in dataset.properties.keys():
                 at_least_one_field = True
                 break
         assert at_least_one_field

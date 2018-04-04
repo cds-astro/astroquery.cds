@@ -22,6 +22,7 @@ from . import conf
 # import MOCServerConstraints and MOCServerResults
 from .constraints import Constraints
 from .output_format import OutputFormat
+from .dataset import Dataset
 
 # export all the public classes and methods
 __all__ = ['mocserver', 'MocserverClass']
@@ -75,6 +76,10 @@ class MocserverClass(BaseQuery):
         # TODO MOCServerResponse
         print(response)
         result = MocserverClass.__parse_result_region(response, output_format)
+        # Once the result is parsed we create Dataset objects from it
+        if output_format.format is OutputFormat.Type.record:
+            return dict([d['ID'], Dataset(**dict([k, d.get(k)] for k in (d.keys() - set('ID'))))] for d in result)
+
         return result
 
     def query_region_async(self, constraints, output_format, get_query_payload, cache=True):
@@ -146,10 +151,10 @@ class MocserverClass(BaseQuery):
 
         r = response.json()
         parsed_r = None
-        if isinstance(r, list) and output_format.format is OutputFormat.Type.record:
+        if output_format.format is OutputFormat.Type.record:
             parsed_r = [dict([k, MocserverClass.__parse_to_float(v)] for k, v in di.items()) for di in r]
-        elif isinstance(r, dict):
-            parsed_r = dict([k, MocserverClass.__parse_to_float(v)] for k, v in r.items())
+        elif output_format.format is OutputFormat.Type.number:
+            parsed_r = dict(number=int(r['number']))
         else:
             parsed_r = r
 
