@@ -39,6 +39,10 @@ class OutputFormat(object):
 
         # parse fields
             if field_l:
+                # The MocServer responds badly to record queries which do not ask
+                # for the ID field. To prevent that, we add it to the list of requested fields
+                field_l.append('ID')
+                field_l = list(set(field_l))
                 fields_str = str(field_l[0])
                 for field in field_l[1:]:
                     if not isinstance(field, str):

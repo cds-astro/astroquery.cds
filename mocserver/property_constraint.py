@@ -24,20 +24,13 @@ class PropertyConstraint(object):
 
     def __init__(self, expression):
         """
-        PropertiesConstraint's constructor
+        PropertyConstraint's constructor
 
-        Parameters:
-            expression : PropertiesExpr
-            the property expr
-
-        Exceptions:
-            TypeError :
-                the expression passed by args to the constructor
-                must be of type PropertiesExpr
-
+        :param expression:
+            can be a PropertiesExpr or a string
         """
 
-        if not isinstance(expression, PropertiesExpr):
+        if not isinstance(expression, PropertiesExpr) and not isinstance(expression, str):
             raise TypeError
 
         self.expr = expression
@@ -46,7 +39,10 @@ class PropertyConstraint(object):
 
     def compute_payload(self):
         """Update the property constraints payload"""
-        self.request_payload = {'expr': self.expr.eval()}
+        if isinstance(self.expr, str):
+            self.request_payload = {'expr': self.expr}
+        else:
+            self.request_payload = {'expr': self.expr.eval()}
 
     def __repr__(self):
         result = "Properties constraints' request payload :\n{0}".format(self.request_payload)

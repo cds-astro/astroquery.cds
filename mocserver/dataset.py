@@ -44,12 +44,12 @@ class Dataset:
 
     def search(self, service_type, **kwargs):
         """
-        Definition of the search function that allows the user to perform queries on the dataset.
+        Definition of the search function allowing the user to perform queries on the dataset.
 
         :param service_type:
             Wait for a Dataset.ServiceType object specifying the type of service to query
         :param kwargs:
-            The params that pyvo requires to query the services.
+            The params that PyVO requires to query the services.
             These depend on the queried service :
             - a simple cone search requires a pos and radius params expressed in deg
             - a tap search requires a SQL query
@@ -72,10 +72,11 @@ class Dataset:
         if not isinstance(service_type, Dataset.ServiceType):
             print("Service {0} not found".format(service_type))
             raise ValueError
-        print(kwargs)
-        if service_type in self.__services.keys():
-            return self.__services[service_type].search(**kwargs).votable
-        else:
+
+        if service_type not in self.__services.keys():
             print('The service {0:s} is not available for this dataset'.format(service_type.name))
             print('Available services are the following :\n{0}'.format(self.services))
-            raise ValueError
+            raise KeyError
+
+        return self.__services[service_type].search(**kwargs).votable
+

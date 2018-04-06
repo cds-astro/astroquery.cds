@@ -70,17 +70,20 @@ class MocserverClass(BaseQuery):
     # actual HTTP request and returns the HTTP response
     def query_region(self, constraints, output_format=OutputFormat(), get_query_payload=False):
         response = self.query_region_async(constraints, output_format, get_query_payload)
+
         if get_query_payload:
             return response
 
         result = MocserverClass.__parse_result_region(response, output_format)
+
         # Once the result is parsed we create Dataset objects from it
         if output_format.format is OutputFormat.Type.record:
-            return dict([d['ID'], Dataset(**dict([k, self.__remove_duplicate(d.get(k))] for k in (d.keys() - set('ID'))))] for d in result)
+            return dict([d['ID'], Dataset(**dict([k, MocserverClass.__remove_duplicate(d.get(k))] for k in (d.keys() - set('ID'))))] for d in result)
 
         return result
 
-    def __remove_duplicate(self, value_l):
+    @staticmethod
+    def __remove_duplicate(value_l):
         if isinstance(value_l, list):
             value_l = list(set(value_l))
             if len(value_l) == 1:
@@ -134,7 +137,7 @@ class MocserverClass(BaseQuery):
             with open(filename, 'rb') as f:
                 request_payload.pop('moc')
 
-                response = self._request('GET', url=self.URL, params=request_payload, timeout=self.TIMEOUT, cache=False, files={'moc' : f})
+                response = self._request('GET', url=self.URL, params=request_payload, timeout=self.TIMEOUT, cache=False, files={'moc': f})
         else:
             response = self._request('GET', url=self.URL, params=request_payload, timeout=self.TIMEOUT, cache=cache)
 
@@ -169,49 +172,6 @@ class MocserverClass(BaseQuery):
     # the methods above call the private _parse_result method.
     # This should parse the raw HTTP response and return it as
     # an `astropy.table.Table`. Below is the skeleton:
-
-    """
-    def _parse_result(self, response, get, verbose=False):
-    # if verbose is False then suppress any VOTable related warnings
-    if not verbose:
-        commons.suppress_vo_warnings()
-    # try to parse the result into an astropy.Table, else
-    # return the raw result with an informative error message.
-    results = response.json()
-    res = None
-    try:
-        # do something with regex to get the result into
-        # astropy.Table form. return the Table.
-        if get == 'ID':
-        res = Table([results], names=('a'))
-        elif get == 'number':
-        res = int(results["number"])
-        elif get == 'record':
-        properties_all_s = set()
-        for record_d in results:
-            properties_all_s = properties_all_s | set(record_d.keys())
-        ordered_columns_t = tuple(sorted(properties_all_s))
-        rows_l = [] 
-        for record_d in results:
-            full_record_d = {propertie: None for propertie in properties_all_s}
-            for key, value in record_d.items():
-            full_record_d.update({key : str(value)})
-
-            row_l = []
-            for k in ordered_columns_t:
-            row_l.append(full_record_d[k])
-            rows_l.append(tuple(row_l))
-        #import pprint; pprint.pprint(rows_l)
-        res = Table(rows=rows_l, names=ordered_columns_t)
-        elif get == 'moc' or get == 'imoc':
-        res = results;
-
-    except ValueError:
-        # catch common errors here, but never use bare excepts
-        # return raw result/ handle in some way
-        pass
-    return res
-    """
 
 
 # the default tool for users to interact with is an instance of the Class
