@@ -52,15 +52,24 @@ if __name__ == '__main__':
     # - MOCServerConstraints object defining all the spatial and properties constraints on the query
     # - MOCServerResponseFormat object defining the response format of the query
     datasets = mocserver.query_region(moc_server_constraints,
-                                      OutputFormat(format=OutputFormat.Type.record))
+                                      OutputFormat(format=OutputFormat.Type.record,
+                                                   field_l=['ID',
+                                                            'cs_service_url',
+                                                            'dataproduct_type']))
     for id, dataset in datasets.items():
-        print(dataset.properties['dataproduct_type'])
+        print(id)
+        dataproduct_type = dataset.properties['dataproduct_type']
+        print(dataproduct_type)
+        if isinstance(dataproduct_type, list):
+            exit()
+        '''
         if 'TAP' in dataset.services:
-            print(id)
-
             print(dataset.search(Dataset.ServiceType.TAP, query="""SELECT * FROM basic JOIN ident ON oidref = oid
 WHERE id ='m13'"""))
 
+        if 'SCS' in dataset.services:
+            print(dataset.search(Dataset.ServiceType.SCS, pos=center, radius=radius))
+        '''
 
     skycoord_list = [coordinates.SkyCoord(ra=57, dec=35, unit="deg"), coordinates.SkyCoord(ra=42, dec=34, unit="deg")]
     moc = MOC.from_coo_list(skycoord_list=skycoord_list, max_norder=5)

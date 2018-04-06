@@ -73,14 +73,20 @@ class MocserverClass(BaseQuery):
         if get_query_payload:
             return response
 
-        # TODO MOCServerResponse
-        print(response)
         result = MocserverClass.__parse_result_region(response, output_format)
         # Once the result is parsed we create Dataset objects from it
         if output_format.format is OutputFormat.Type.record:
-            return dict([d['ID'], Dataset(**dict([k, d.get(k)] for k in (d.keys() - set('ID'))))] for d in result)
+            return dict([d['ID'], Dataset(**dict([k, self.__remove_duplicate(d.get(k))] for k in (d.keys() - set('ID'))))] for d in result)
 
         return result
+
+    def __remove_duplicate(self, value_l):
+        if isinstance(value_l, list):
+            value_l = list(set(value_l))
+            if len(value_l) == 1:
+                return value_l[0]
+
+        return value_l
 
     def query_region_async(self, constraints, output_format, get_query_payload, cache=True):
         """
