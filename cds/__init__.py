@@ -31,8 +31,8 @@ conf = Conf()
 
 # Now import your public class
 # Should probably have the same name as your module
-from .core import mocserver, MocserverClass
+from .core import cds, CdsClass
 
-__all__ = ['mocserver', 'MocserverClass',
+__all__ = ['cds', 'CdsClass',
            'Conf', 'conf',
 ]

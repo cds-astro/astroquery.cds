@@ -4,7 +4,7 @@ import os
 import json
 from sys import getsizeof
 
-from ..core import mocserver, MocserverClass
+from ..core import cds, CdsClass
 
 from ..constraints import Constraints
 from ..spatial_constraints import *
@@ -43,7 +43,7 @@ def patch_get(request):
         mp = request.getfixturevalue("monkeypatch")
     except AttributeError:  # pytest < 3
         mp = request.getfuncargvalue("monkeypatch")
-    mp.setattr(MocserverClass, '_request', get_mockreturn)
+    mp.setattr(CdsClass, '_request', get_mockreturn)
     return mp
 
 
@@ -65,8 +65,9 @@ def get_request_results():
         moc_server_constraints.spatial_constraint = spatial_constraint
         moc_server_constraints.properties_constraint = property_constraint
 
-        request_result = mocserver.query_region(moc_server_constraints, moc_server_format)
+        request_result = cds.query_region(moc_server_constraints, moc_server_format)
         return request_result
+
     return process_query
 
 
@@ -92,8 +93,12 @@ def get_true_request_results():
 
 """List of all the constraint we want to test"""
 # SPATIAL CONSTRAINTS DEFINITIONS
-polygon1 = PolygonSkyRegion(vertices=coordinates.SkyCoord([57.376, 56.391, 56.025, 56.616], [24.053, 24.622, 24.049, 24.291], frame="icrs", unit="deg"))
-polygon2 = PolygonSkyRegion(vertices=coordinates.SkyCoord([58.376, 53.391, 56.025, 54.616], [24.053, 25.622, 22.049, 27.291], frame="icrs", unit="deg"))
+polygon1 = PolygonSkyRegion(
+    vertices=coordinates.SkyCoord([57.376, 56.391, 56.025, 56.616], [24.053, 24.622, 24.049, 24.291], frame="icrs",
+                                  unit="deg"))
+polygon2 = PolygonSkyRegion(
+    vertices=coordinates.SkyCoord([58.376, 53.391, 56.025, 54.616], [24.053, 25.622, 22.049, 27.291], frame="icrs",
+                                  unit="deg"))
 polygon_search_constraint = Polygon(polygon1, intersect='overlaps')
 
 # PROPERTY CONSTRAINTS DEFINITIONS
@@ -108,20 +113,20 @@ properties_ex = PropertyConstraint(ParentNode(
 ))
 
 properties_hips_from_saada_alasky = \
-        PropertyConstraint(ParentNode(
-            OperandExpr.Inter,
-            ChildNode("hips_service_url*=http://saada*"),
-            ChildNode("hips_service_url*=http://alasky.*"))
-        )
+    PropertyConstraint(ParentNode(
+        OperandExpr.Inter,
+        ChildNode("hips_service_url*=http://saada*"),
+        ChildNode("hips_service_url*=http://alasky.*"))
+    )
 
 properties_hips_gaia = PropertyConstraint(
     ParentNode(OperandExpr.Subtr,
-                       ParentNode(OperandExpr.Inter,
-                                          ParentNode(OperandExpr.Union,
-                                                             ChildNode("obs_*=*gaia*"),
-                                                             ChildNode("ID=*gaia*")),
-                                          ChildNode("hips_service_url=*")),
-                       ChildNode("obs_*=*simu")))
+               ParentNode(OperandExpr.Inter,
+                          ParentNode(OperandExpr.Union,
+                                     ChildNode("obs_*=*gaia*"),
+                                     ChildNode("ID=*gaia*")),
+                          ChildNode("hips_service_url=*")),
+               ChildNode("obs_*=*simu")))
 
 """
 Combination of one spatial with a property constraint
@@ -148,11 +153,11 @@ def moc_spatial_constraint():
 
 
 @pytest.mark.parametrize('spatial_constraint, property_constraint, data_file_id',
-    [(cone_spatial_constraint, None, 'CONE_SEARCH'),
-    (polygon_search_constraint, None, 'POLYGON_SEARCH'),
-    (None, properties_ex, 'PROPERTIES_SEARCH'),
-    (None, properties_hips_from_saada_alasky, 'HIPS_FROM_SAADA_AND_ALASKY'),
-    (None, properties_hips_gaia, 'HIPS_GAIA')])
+                         [(cone_spatial_constraint, None, 'CONE_SEARCH'),
+                          (polygon_search_constraint, None, 'POLYGON_SEARCH'),
+                          (None, properties_ex, 'PROPERTIES_SEARCH'),
+                          (None, properties_hips_from_saada_alasky, 'HIPS_FROM_SAADA_AND_ALASKY'),
+                          (None, properties_hips_gaia, 'HIPS_GAIA')])
 def test_request_results(spatial_constraint, property_constraint, data_file_id,
                          get_true_request_results,
                          get_request_results):
@@ -184,33 +189,33 @@ request param 'intersect' is correct
 
 
 @pytest.mark.parametrize('RA, DEC, RADIUS',
-    [(10.8, 6.5, 0.5),
-    (25.6, -23.2, 1.1),
-    (150.6, 45.1, 1.5)])
+                         [(10.8, 6.5, 0.5),
+                          (25.6, -23.2, 1.1),
+                          (150.6, 45.1, 1.5)])
 def test_cone_search_spatial_request(RA, DEC, RADIUS):
     center = coordinates.SkyCoord(ra=RA, dec=DEC, unit="deg")
     radius = coordinates.Angle(RADIUS, unit="deg")
     circle_sky_region = CircleSkyRegion(center, radius)
     moc_server_constraints = Constraints(sc=Cone(circle_sky_region, intersect="overlaps"))
 
-    request_payload = mocserver.query_region(moc_server_constraints,
+    request_payload = cds.query_region(moc_server_constraints,
                                              OutputFormat(),
                                              get_query_payload=True)
 
-    assert (request_payload['DEC'] == str(DEC)) and\
-           (request_payload['RA'] == str(RA)) and\
+    assert (request_payload['DEC'] == str(DEC)) and \
+           (request_payload['RA'] == str(RA)) and \
            (request_payload['SR'] == str(RADIUS))
 
 
 @pytest.mark.parametrize('poly, poly_payload',
-[(polygon1, 'Polygon 57.376 24.053 56.391 24.622 56.025 24.049 56.616 24.291'),
-(polygon2, 'Polygon 58.376 24.053 53.391 25.622 56.025 22.049 54.616 27.291')])
+                         [(polygon1, 'Polygon 57.376 24.053 56.391 24.622 56.025 24.049 56.616 24.291'),
+                          (polygon2, 'Polygon 58.376 24.053 53.391 25.622 56.025 22.049 54.616 27.291')])
 def test_polygon_spatial_request(poly, poly_payload, init_request):
     moc_server_constraints, moc_server_format = init_request
     spatial_constraint = Polygon(poly, intersect="overlaps")
     moc_server_constraints.spatial_constraint = spatial_constraint
 
-    request_payload = mocserver.query_region(moc_server_constraints,
+    request_payload = cds.query_region(moc_server_constraints,
                                              moc_server_format,
                                              get_query_payload=True)
 
@@ -218,12 +223,12 @@ def test_polygon_spatial_request(poly, poly_payload, init_request):
 
 
 @pytest.mark.parametrize('intersect',
-['enclosed', 'overlaps', 'covers'])
+                         ['enclosed', 'overlaps', 'covers'])
 def test_intersect_param(intersect, cone_spatial_constraint):
     cone_spatial_constraint.intersect = intersect
     moc_server_constraints = Constraints(sc=cone_spatial_constraint)
 
-    request_payload = mocserver.query_region(moc_server_constraints,
+    request_payload = cds.query_region(moc_server_constraints,
                                              OutputFormat(),
                                              get_query_payload=True)
 
@@ -240,7 +245,7 @@ def test_get_attribute(get_attr, get_attr_str, cone_spatial_constraint):
     moc_server_format = OutputFormat(format=get_attr)
     moc_server_constraints = Constraints(sc=cone_spatial_constraint)
 
-    result = mocserver.query_region(moc_server_constraints,
+    result = cds.query_region(moc_server_constraints,
                                     moc_server_format,
                                     get_query_payload=True)
 
@@ -253,7 +258,7 @@ def test_max_rec_param(max_rec, cone_spatial_constraint):
     moc_server_constraints = Constraints(sc=cone_spatial_constraint)
     output_format = OutputFormat(max_rec=max_rec)
 
-    result = mocserver.query_region(moc_server_constraints, output_format)
+    result = cds.query_region(moc_server_constraints, output_format)
 
     assert max_rec == len(result)
 
@@ -265,10 +270,11 @@ def test_max_rec_param(moc_order, moc_spatial_constraint):
     output_format = OutputFormat(format=OutputFormat.Type.moc,
                                  moc_order=moc_order)
 
-    result = mocserver.query_region(moc_server_constraints, output_format)
+    result = cds.query_region(moc_server_constraints, output_format)
 
     assert isinstance(result, dict)
     assert str(moc_order) in result.keys()
+
 
 # test of field_l when retrieving dataset records
 @pytest.mark.parametrize('field_l', [['ID'],
@@ -279,7 +285,7 @@ def test_field_l_param(field_l, cone_spatial_constraint):
     moc_server_constraints = Constraints(sc=cone_spatial_constraint)
     output_format = OutputFormat(format=OutputFormat.Type.record, field_l=field_l)
 
-    datasets = mocserver.query_region(moc_server_constraints, output_format)
+    datasets = cds.query_region(moc_server_constraints, output_format)
 
     assert isinstance(datasets, dict)
     for id, dataset in datasets.items():

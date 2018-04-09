@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*
 
 from astropy import coordinates
-from mocserver.core import mocserver
-from mocserver.spatial_constraints import *
-from mocserver.constraints import Constraints
+from cds.core import cds
+from cds.spatial_constraints import *
+from cds.constraints import Constraints
 
-from mocserver.property_constraint import *
+from cds.property_constraint import *
 
-from mocserver.output_format import *
+from cds.output_format import *
 
-from mocserver.dataset import Dataset
+from cds.dataset import Dataset
 
 if __name__ == '__main__':
     # Spatial constraint definition
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     properties_constraint = PropertyConstraint('moc_sky_fraction <= 0.01 && hips* = *')
     # A moc server constraints object contains one spatial and/or one properties constraint
     moc_server_constraints = Constraints(sc=spatial_constraint, pc=properties_constraint)
-    datasets = mocserver.query_region(moc_server_constraints,
+    datasets = cds.query_region(moc_server_constraints,
                                       OutputFormat(format=OutputFormat.Type.record,
                                                    field_l=['ID',
                                                             'cs_service_url',

@@ -25,7 +25,7 @@ from .output_format import OutputFormat
 from .dataset import Dataset
 
 # export all the public classes and methods
-__all__ = ['mocserver', 'MocserverClass']
+__all__ = ['cds', 'CdsClass']
 # declare global variables and constants if any
 
 # Now begin your main class
@@ -33,7 +33,7 @@ __all__ = ['mocserver', 'MocserverClass']
 
 
 @async_to_sync
-class MocserverClass(BaseQuery):
+class CdsClass(BaseQuery):
     """
     Not all the methods below are necessary but these cover most of the common
     cases, new methods may be added if necessary, follow the guidelines at
@@ -74,11 +74,11 @@ class MocserverClass(BaseQuery):
         if get_query_payload:
             return response
 
-        result = MocserverClass.__parse_result_region(response, output_format)
+        result = CdsClass.__parse_result_region(response, output_format)
 
         # Once the result is parsed we create Dataset objects from it
         if output_format.format is OutputFormat.Type.record:
-            return dict([d['ID'], Dataset(**dict([k, MocserverClass.__remove_duplicate(d.get(k))] for k in (d.keys() - set('ID'))))] for d in result)
+            return dict([d['ID'], Dataset(**dict([k, CdsClass.__remove_duplicate(d.get(k))] for k in (d.keys() - set('ID'))))] for d in result)
 
         return result
 
@@ -161,7 +161,7 @@ class MocserverClass(BaseQuery):
         r = response.json()
         parsed_r = None
         if output_format.format is OutputFormat.Type.record:
-            parsed_r = [dict([k, MocserverClass.__parse_to_float(v)] for k, v in di.items()) for di in r]
+            parsed_r = [dict([k, CdsClass.__parse_to_float(v)] for k, v in di.items()) for di in r]
         elif output_format.format is OutputFormat.Type.number:
             parsed_r = dict(number=int(r['number']))
         else:
@@ -175,7 +175,7 @@ class MocserverClass(BaseQuery):
 
 
 # the default tool for users to interact with is an instance of the Class
-mocserver = MocserverClass()
+cds = CdsClass()
 
 # once your class is done, tests should be written
 # See ./tests for examples on this

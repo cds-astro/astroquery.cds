@@ -130,7 +130,16 @@ their IDs. To get the properties of one dataset, say
 
 It is also possible to get only the datasets ``ID``\ s, the ``number``
 of matching datasets or just the ``moc`` resulting from the union of all
-the mocs of the matching datasets.
+the mocs of the matching datasets. (See the OutputFormat definition class and its ``format`` type).
+
+The result of a mocserver query depends on the OutputFormat object we have passed to the query_region method.
+If we query for the ``ID``\ s of the datasets then we get a python list of all the  ``ID``\ s matching the condition.
+If a user query for the ``number`` of datasets, he gets an int.
+If you want all the record of the matching datasets (the ``ID`` \s plus its properties/fields) you get
+as we have seen above, a dictionary indexed by the ``ID`` \s of the datasets and as each value a Dataset object.
+This Dataset object allows you to query a specific service (if available for this dataset) such as a tap service, a cone search service...
+The service then returns a VOTable containing all the matching sources of the dataset you have submitted a query.
+
 
 .. code:: python3
 
