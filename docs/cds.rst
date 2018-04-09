@@ -1,9 +1,9 @@
 
 .. doctest-skip-all
-.. _astroquery.mocserver:
+.. _astroquery.cds:
 
 ********************************
-MocServer Queries (`astroquery.mocserver`)
+CDS Queries (`astroquery.cds`)
 ********************************
 
 Getting started
@@ -25,7 +25,7 @@ The following packages are required for the use of this module:
 * pyvo
 * regions
 
-Performing a mocserver query on a simple cone region
+Performing a cds query on a simple cone region
 ====================================================
 
 .. code:: python3
@@ -33,11 +33,11 @@ Performing a mocserver query on a simple cone region
     from astropy import coordinates
     from regions import CircleSkyRegion
 
-    from astroquery.mocserver.core import mocserver
+    from astroquery.cds.core import cds
 
-    from astroquery.mocserver.constraints import Constraints
-    from astroquery.mocserver.spatial_constraints import Cone
-    from astroquery.mocserver.output_format import OutputFormat
+    from astroquery.cds.constraints import Constraints
+    from astroquery.cds.spatial_constraints import Cone
+    from astroquery.cds.output_format import OutputFormat
 
 A cone search region is defined using the CircleSkyRegion module from
 the regions package. Here, a cone is defined by a location (dec, ra)
@@ -50,12 +50,14 @@ expressed in degree and a radius.
     circle_sky_region = CircleSkyRegion(center, radius)
 
 This above cone region can be seen as a spatial constraint for the
-mocserver. The aim of the mocserver relies on returning all the datasets
+cds. The aim of the cds relies on returning all the datasets
 which contain at least one source (i.e. a spatial object) lying in the
-previously defined cone region.
+previously defined cone region. This internal CDS service involves a
+server named MocServer which performs all the queries and returns 
+the matching datasets.
 
 A Constraints object allow us to specify the constraints that will be
-sent to the mocserver so that it returns all the matching datasets. For
+sent to the cds so that it returns all the matching datasets. For
 the purpose of this tutorial, we will only bind a Cone spatial
 constraint to our query but keep in mind that it is also possible to
 associate to the Constraints object a constraint on the dataset
@@ -64,24 +66,23 @@ spatial constraint and a properties constraint) as we will see in the next secti
 
 .. code:: python3
 
-    mocserver_constraints = Constraints(sc=Cone(circle_sky_region, intersect='overlaps'))
+    cds_constraints = Constraints(sc=Cone(circle_sky_region, intersect='overlaps'))
 
 Here we have created a Constraints object and we have bound to it a Cone
 spatial constraint. The argument ``intersect`` specifies that the
 datasets need to intersect the cone region so that they match the
-mocserver query. Other possible ``intersect`` argument values are
+cds query. Other possible ``intersect`` argument values are
 ``covers`` and ``enclosed``.
 
 Now it is time to perform the query. We call the query\_region method
-from the mocserver object that we imported and pass it the mocserver
-constraints object with an OutputFormat object which specify what we
+from the cds object that we imported and pass it the cds\_constraints object with an OutputFormat object which specify what we
 want to retrieve. In the code below, we have chosen to retrieve all the
 ``ID``, ``dataproduct_type`` and ``moc_sky_fraction`` properties from
 the matching datasets.
 
 .. code:: python3
 
-    datasets_d = mocserver.query_region(mocserver_constraints,
+    datasets_d = cds.query_region(cds_constraints,
                                       OutputFormat(format=OutputFormat.Type.record,
                                                    field_l=['ID', 'dataproduct_type', 'moc_sky_fraction']))
     import pprint;
@@ -100,21 +101,21 @@ the matching datasets.
      'get': 'record',
      'intersect': 'overlaps'}
     <Response [200]>
-    {'CDS/B/assocdata/obscore': <mocserver.dataset.Dataset object at 0x7fb6a2379c88>,
-     'CDS/B/cb/lmxbdata': <mocserver.dataset.Dataset object at 0x7fb6a2379ef0>,
-     'CDS/B/cfht/cfht': <mocserver.dataset.Dataset object at 0x7fb6a2379e80>,
-     'CDS/B/cfht/obscore': <mocserver.dataset.Dataset object at 0x7fb6a2379eb8>,
-     'CDS/B/chandra/chandra': <mocserver.dataset.Dataset object at 0x7fb6a2379da0>,
-     'CDS/B/eso/eso_arc': <mocserver.dataset.Dataset object at 0x7fb6a45b8f98>,
-     'CDS/B/gcvs/gcvs_cat': <mocserver.dataset.Dataset object at 0x7fb6a44845f8>,
-     'CDS/B/gcvs/nsv_cat': <mocserver.dataset.Dataset object at 0x7fb6a44847f0>,
-     'CDS/B/gemini/obscore': <mocserver.dataset.Dataset object at 0x7fb6a4484dd8>,
-     'CDS/B/hst/hstlog': <mocserver.dataset.Dataset object at 0x7fb6a4484e80>,
-     'CDS/B/hst/obscore': <mocserver.dataset.Dataset object at 0x7fb6a4484f98>,
+    {'CDS/B/assocdata/obscore': <cds.dataset.Dataset object at 0x7fb6a2379c88>,
+     'CDS/B/cb/lmxbdata': <cds.dataset.Dataset object at 0x7fb6a2379ef0>,
+     'CDS/B/cfht/cfht': <cds.dataset.Dataset object at 0x7fb6a2379e80>,
+     'CDS/B/cfht/obscore': <cds.dataset.Dataset object at 0x7fb6a2379eb8>,
+     'CDS/B/chandra/chandra': <cds.dataset.Dataset object at 0x7fb6a2379da0>,
+     'CDS/B/eso/eso_arc': <cds.dataset.Dataset object at 0x7fb6a45b8f98>,
+     'CDS/B/gcvs/gcvs_cat': <cds.dataset.Dataset object at 0x7fb6a44845f8>,
+     'CDS/B/gcvs/nsv_cat': <cds.dataset.Dataset object at 0x7fb6a44847f0>,
+     'CDS/B/gemini/obscore': <cds.dataset.Dataset object at 0x7fb6a4484dd8>,
+     'CDS/B/hst/hstlog': <cds.dataset.Dataset object at 0x7fb6a4484e80>,
+     'CDS/B/hst/obscore': <cds.dataset.Dataset object at 0x7fb6a4484f98>,
       ...}
 
 
-We get a dictionary of mocserver.dataset.Dataset objects indexed by
+We get a dictionary of cds.dataset.Dataset objects indexed by
 their IDs. To get the properties of one dataset, say
 ``CDS/B/eso/eso_arc``, just do the following :
 
@@ -132,7 +133,7 @@ It is also possible to get only the datasets ``ID``\ s, the ``number``
 of matching datasets or just the ``moc`` resulting from the union of all
 the mocs of the matching datasets. (See the OutputFormat definition class and its ``format`` type).
 
-The result of a mocserver query depends on the OutputFormat object we have passed to the query_region method.
+The result of a cds query depends on the OutputFormat object we have passed to the query_region method.
 If we query for the ``ID``\ s of the datasets then we get a python list of all the  ``ID``\ s matching the condition.
 If a user query for the ``number`` of datasets, he gets an int.
 If you want all the record of the matching datasets (the ``ID`` \s plus its properties/fields) you get
@@ -143,7 +144,7 @@ The service then returns a VOTable containing all the matching sources of the da
 
 .. code:: python3
 
-    response = mocserver.query_region(mocserver_constraints,
+    response = cds.query_region(cds_constraints,
                                       OutputFormat(format=OutputFormat.Type.moc,
                                                    moc_order=14))
     import pprint;
@@ -182,7 +183,7 @@ Mixing a spatial constraint with a constraint on properties
 ===========================================================
 
 We now want to bind a spatial and a properties constraints to the
-Constraints object so that our mocserver query returns all the datasets
+Constraints object so that our cds query returns all the datasets
 matching those two constraints.
 
 .. code:: python3
@@ -190,12 +191,12 @@ matching those two constraints.
     from astropy import coordinates
     from regions import CircleSkyRegion
 
-    from astroquery.mocserver.core import mocserver
+    from astroquery.cds.core import cds
 
-    from astroquery.mocserver.constraints import Constraints
-    from astroquery.mocserver.spatial_constraints import Moc
-    from astroquery.mocserver.property_constraint import *
-    from astroquery.mocserver.output_format import OutputFormat
+    from astroquery.cds.constraints import Constraints
+    from astroquery.cds.spatial_constraints import Moc
+    from astroquery.cds.property_constraint import *
+    from astroquery.cds.output_format import OutputFormat
 
 As for the spatial constraint, let is define a moc from an url
 
@@ -227,13 +228,13 @@ one), we can bind them to a Constraints object
 
 .. code:: python3
 
-    mocserver_constraints = Constraints(sc=moc, pc=properties_constraint)
+    cds_constraints = Constraints(sc=moc, pc=properties_constraint)
 
-And simply call the mocserver object to run the query
+And simply call the cds object to run the query
 
 .. code:: python3
 
-    response = mocserver.query_region(mocserver_constraints,
+    response = cds.query_region(cds_constraints,
                                       OutputFormat(format=OutputFormat.Type.id))
     response
 
@@ -265,7 +266,7 @@ And simply call the mocserver object to run the query
 
 
 
-We have obtained from the mocserver the datasets which intersect the moc
+We have obtained from the cds the datasets which intersect the moc
 found at the url http://alasky.u-strasbg.fr/SDSS/DR9/color/Moc.fits,
 have the 'CDS' word in their IDs and finally, have a moc\_sky\_fraction
 with at least 1%.
@@ -273,5 +274,5 @@ with at least 1%.
 Reference/API
 =============
 
-.. automodapi:: astroquery.mocserver
+.. automodapi:: astroquery.cds
     :no-inheritance-diagram:
