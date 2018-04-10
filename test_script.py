@@ -38,7 +38,7 @@ if __name__ == '__main__':
     ))
     '''
 
-    properties_constraint = PropertyConstraint('moc_sky_fraction <= 0.01 && hips* = *')
+    properties_constraint = PropertyConstraint('ID = *CDS*')
     # A moc server constraints object contains one spatial and/or one properties constraint
     moc_server_constraints = Constraints(sc=spatial_constraint, pc=properties_constraint)
     datasets = cds.query_region(moc_server_constraints,
@@ -49,16 +49,12 @@ if __name__ == '__main__':
                                                             'tap_service_url']))
 
     for id, dataset in list(datasets.items()):
-        print(id)
         if 'dataproduct_type' in dataset.properties.keys():
             dataproduct_type = dataset.properties['dataproduct_type']
-            print(dataproduct_type)
 
-        if 'TAP' in dataset.services:
-            print("sdfsdf")
-            print(dataset.search(Dataset.ServiceType.TAP, query="""SELECT * FROM basic JOIN ident ON oidref = oid
-WHERE id ='m13'"""))
-            exit()
+        if 'tap' in dataset.services:
+            print(dataset.search(Dataset.ServiceType.tap, query="""SELECT * FROM basic JOIN ident ON oidref = oid"""))
 
-        # if 'SCS' in dataset.services:
-        #    print(dataset.search(Dataset.ServiceType.SCS, pos=center, radius=radius))
+        #if 'cs' in dataset.services:
+        #    print(dataset.search(Dataset.ServiceType.cs, pos=center, radius=radius))
+        #    exit()
