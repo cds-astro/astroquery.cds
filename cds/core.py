@@ -17,12 +17,17 @@ from astroquery.query import BaseQuery
 from astroquery.utils import commons
 # async_to_sync generates the relevant query tools from _async methods
 from astroquery.utils import async_to_sync
+
+from mocpy import MOC
+from mocpy.interval_set import IntervalSet
+
 # import configurable items declared in __init__.py
 from . import conf
 # import MOCServerConstraints and MOCServerResults
 from .constraints import Constraints
 from .output_format import OutputFormat
 from .dataset import Dataset
+
 
 # export all the public classes and methods
 __all__ = ['cds', 'CdsClass']
@@ -75,10 +80,6 @@ class CdsClass(BaseQuery):
             return response
 
         result = CdsClass.__parse_result_region(response, output_format)
-
-        # Once the result is parsed we create Dataset objects from it
-        if output_format.format is OutputFormat.Type.record:
-            return dict([d['ID'], Dataset(**dict([k, CdsClass.__remove_duplicate(d.get(k))] for k in (d.keys() - set('ID'))))] for d in result)
 
         return result
 
@@ -151,6 +152,22 @@ class CdsClass(BaseQuery):
             return value
 
     @staticmethod
+    def orderipix2uniq(n_order, n_pix):
+        return ((4**n_order) << 2) + n_pix
+
+    @staticmethod
+    def create_mocpy_object_from_json(json_moc):
+        uniq_interval = IntervalSet()
+        for n_order, n_pix_l in json_moc.items():
+            n_order = int(n_order)
+
+            for n_pix in n_pix_l:
+                uniq_interval.add(__class__.orderipix2uniq(n_order, n_pix))
+
+        moc = MOC.from_uniq_interval_set(uniq_interval)
+        return moc
+
+    @staticmethod
     def __parse_result_region(response, output_format, verbose=False):
         # if verbose is False then suppress any VOTable related warnings
         if not verbose:
@@ -162,8 +179,14 @@ class CdsClass(BaseQuery):
         parsed_r = None
         if output_format.format is OutputFormat.Type.record:
             parsed_r = [dict([k, CdsClass.__parse_to_float(v)] for k, v in di.items()) for di in r]
+            # Once the properties have been parsed to float we can create the final
+            # dictionary of Dataset objects indexed by their IDs
+            parsed_r = dict([d['ID'], Dataset(**dict([k, CdsClass.__remove_duplicate(d.get(k))] for k in (d.keys() - set('ID'))))] for d in parsed_r)
         elif output_format.format is OutputFormat.Type.number:
             parsed_r = dict(number=int(r['number']))
+        elif output_format.format is OutputFormat.Type.moc:
+            # Create a mocpy object from the json syntax
+            parsed_r = __class__.create_mocpy_object_from_json(r)
         else:
             parsed_r = r
 

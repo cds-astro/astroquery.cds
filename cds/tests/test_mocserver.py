@@ -15,6 +15,7 @@ from astroquery.utils.testing_tools import MockResponse
 
 from astropy import coordinates
 from regions import CircleSkyRegion, PolygonSkyRegion
+from mocpy import MOC
 
 DATA_FILES = {
     'CONE_SEARCH': 'cone_search.json',
@@ -272,8 +273,7 @@ def test_max_rec_param(moc_order, moc_spatial_constraint):
 
     result = cds.query_region(moc_server_constraints, output_format)
 
-    assert isinstance(result, dict)
-    assert str(moc_order) in result.keys()
+    assert isinstance(result, MOC)
 
 
 # test of field_l when retrieving dataset records
