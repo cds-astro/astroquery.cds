@@ -185,8 +185,8 @@ class CdsClass(BaseQuery):
             parsed_r = dict([d['ID'], Dataset(**dict([k, CdsClass.__remove_duplicate(d.get(k))] for k in (d.keys() - set('ID'))))] for d in parsed_r)
         elif output_format.format is OutputFormat.Type.number:
             parsed_r = dict(number=int(r['number']))
-        elif output_format.format is OutputFormat.Type.moc or \
-                output_format.format is OutputFormat.Type.imoc:
+        elif output_format.format is OutputFormat.Type.moc or\
+                output_format.format is OutputFormat.Type.i_moc:
             # Create a mocpy object from the json syntax
             parsed_r = __class__.create_mocpy_object_from_json(r)
         else:
