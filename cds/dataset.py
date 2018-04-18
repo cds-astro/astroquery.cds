@@ -1,7 +1,7 @@
 import pyvo as vo
 from enum import Enum
 from copy import copy
-
+from random import shuffle
 
 class Dataset:
 
@@ -46,6 +46,12 @@ class Dataset:
 
             name_srv_property += '_' + str(id_mirror_server)
             id_mirror_server = id_mirror_server + 1
+
+        # The mirrors for a same service are shuffled allowing each
+        # of the mirror to be queried at the same rate if a lot of
+        # people proceeds to query a specific service
+        if service_type in self.__services.keys():
+            shuffle(self.__services[service_type])
 
 
     @property
@@ -93,30 +99,18 @@ class Dataset:
 
         services_l = self.__services[service_type]
 
-        if service_type is Dataset.ServiceType.tap:
-            """ Tap services can be queried asynchronously.
-             We query the first service until we get the result or
-             we get a vo.dal.DALQueryError (timeout reached). 
-             If we get the result, we can fetch the votable from the completed job and destroy the job.
-             Otherwise we query the second service and we continue until we get a result.
-             If all the services have been queried and have ended by getting an exception then
-             we raise this same exception telling the user the services have been queried but have returned nothing."""
-            for i in range(len(services_l)):
-                try:
-                    with services_l[i].submit_job(**kwargs) as job:
-                        job.execution_duration = __class__.tap_service_timeout
-                        job.run()
+        """ Mirrors services are queried in a random way (services_l shuffled) until 
+        DALErrors are not raised and we get a votable"""
+        result = None
+        index_service = 0
+        while not result:
+            try:
+                result = services_l[index_service].search(**kwargs).votable
+            except (vo.dal.DALQueryError, vo.dal.DALServiceError) as dal_error:
+                if index_service >= len(services_l) - 1:
+                    raise dal_error
 
-                        while True:
-                            if job.phase != 'EXECUTING':
-                                print(job.phase)
-                                job.raise_if_error()
-                                return job.fetch_result().votable
-                except vo.dal.DALQueryError as dal_query_error:
-                    if i == len(services_l) - 1:
-                        print("All the tap services have been queried but do not respond. "
-                              "Please, retry later.")
-                        raise dal_query_error
-        else:
-            return services_l[0].search(**kwargs).votable
+            index_service += 1
+
+        return result
 

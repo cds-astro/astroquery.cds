@@ -164,7 +164,6 @@ class Polygon(SpatialConstraint):
 
         return polygon_stc
 
-from astropy_healpix import HEALPix
 
 class Moc(SpatialConstraint):
     def __init__(self, intersect='overlaps'):

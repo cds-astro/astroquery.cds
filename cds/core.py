@@ -157,6 +157,7 @@ class CdsClass(BaseQuery):
 
     @staticmethod
     def create_mocpy_object_from_json(json_moc):
+        # TODO : just call the MOC.from_json classmethod to get the corresponding mocpy object
         uniq_interval = IntervalSet()
         for n_order, n_pix_l in json_moc.items():
             n_order = int(n_order)
@@ -184,17 +185,14 @@ class CdsClass(BaseQuery):
             parsed_r = dict([d['ID'], Dataset(**dict([k, CdsClass.__remove_duplicate(d.get(k))] for k in (d.keys() - set('ID'))))] for d in parsed_r)
         elif output_format.format is OutputFormat.Type.number:
             parsed_r = dict(number=int(r['number']))
-        elif output_format.format is OutputFormat.Type.moc:
+        elif output_format.format is OutputFormat.Type.moc or \
+                output_format.format is OutputFormat.Type.imoc:
             # Create a mocpy object from the json syntax
             parsed_r = __class__.create_mocpy_object_from_json(r)
         else:
             parsed_r = r
 
         return parsed_r
-
-    # the methods above call the private _parse_result method.
-    # This should parse the raw HTTP response and return it as
-    # an `astropy.table.Table`. Below is the skeleton:
 
 
 # the default tool for users to interact with is an instance of the Class
